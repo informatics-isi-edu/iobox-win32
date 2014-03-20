@@ -44,6 +44,7 @@ def processFile(observer, filename, retry):
         shasum = sha256sum(filename)
         fileobjs = []
         obj = {'slide_id': slide_id, 
+               'filename': os.path.basename(filename),
                'sha256sum': shasum,
                'file_from': create_uri_friendly_file_path(filename),
                'file_to': '/scans/%s/%s' % (slide_id, shasum)}

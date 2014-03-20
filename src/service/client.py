@@ -184,9 +184,10 @@ class ErmrestClient (object):
             for f in files:
                 slide_id = f['slide_id']
                 sha256sum = f['sha256sum']
+                filename = f['filename']
                 file_from = f['file_from']
                 file_to = '/%s' % f['file_to']
-                obj = self.getScanAttributes(slide_id,sha256sum,http_url,st_size)
+                obj = self.getScanAttributes(filename, slide_id, sha256sum, http_url,st_size)
                 body.append(obj)
             url = '%s/entity/scan' % self.path
             headers = {'Content-Type': 'application/json'}
@@ -203,14 +204,14 @@ class ErmrestClient (object):
         return ret
                     
         
-    def getScanAttributes(self, slide_id, sha256sum,http_url,st_size):
+    def getScanAttributes(self, filename, slide_id, sha256sum, http_url, st_size):
         obj = {}
         obj['id'] = sha256sum
         obj['slide_id'] = slide_id
-        obj['scan_num'] = 0
         obj['go_endpoint'] = self.endpoint_2
         obj['go_path'] = '/scans/%s/%s.czi' % (slide_id,sha256sum)
         obj['http_url'] = '%s/scans/%s/%s.czi' % (http_url,slide_id,sha256sum)
+        obj['original_filename'] = filename
         obj['filename'] = '%s.czi' % sha256sum
         obj['filesize'] = st_size
         obj['thumbnail'] = '%s/thumbnails/%s/%s.jpg' % (http_url,slide_id,sha256sum)
