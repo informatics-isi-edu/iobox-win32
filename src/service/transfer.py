@@ -47,7 +47,7 @@ def processFile(observer, filename, retry):
                'filename': os.path.basename(filename),
                'sha256sum': shasum,
                'file_from': create_uri_friendly_file_path(filename),
-               'file_to': '/scans/%s/%s' % (slide_id, shasum)}
+               'file_to': '/scans/%s/%s.czi' % (slide_id, shasum)}
         fileobjs.append(obj)
         serviceconfig.logger.info('Registering file: %s' % os.path.basename(filename))
         task_id, status = observer.client.add_subjects(fileobjs, observer.http_url, st_size, observer.bulk_ops_max, retry, sleep_time)
