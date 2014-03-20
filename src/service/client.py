@@ -214,7 +214,7 @@ class ErmrestClient (object):
         obj['original_filename'] = filename
         obj['filename'] = '%s.czi' % sha256sum
         obj['filesize'] = st_size
-        obj['thumbnail'] = '%s/thumbnails/%s/%s.jpg' % (http_url,slide_id,sha256sum)
+        #obj['thumbnail'] = '%s/thumbnails/%s/%s.jpg' % (http_url,slide_id,sha256sum)
         obj['tilesdir'] = '%s/' % slide_id
         obj['zoomify'] = '%s/html/%s/%s.html' % (http_url,slide_id,sha256sum)
         return obj
