@@ -35,7 +35,7 @@ Installation
   
   		python setup.py py2exe
 
-	 Two directories will be created: "build" and "dist". You can ignore the "build" directory.
+	 Two directories will be created: "build" and "dist". Remove the "build" directory.
 	 
   4. Open a 'Command Prompt' window in 'Run as Administrator' mode.
    
