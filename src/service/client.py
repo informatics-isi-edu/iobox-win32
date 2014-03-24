@@ -189,7 +189,7 @@ class ErmrestClient (object):
                 file_to = '/%s' % f['file_to']
                 obj = self.getScanAttributes(filename, slide_id, sha256sum, http_url,st_size)
                 body.append(obj)
-            url = '%s/entity/scan' % self.path
+            url = '%s/entity/Scan' % self.path
             headers = {'Content-Type': 'application/json'}
             try:
                 self.send_request('POST', url, json.dumps(body), headers)
