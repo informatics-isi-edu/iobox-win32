@@ -206,17 +206,16 @@ class ErmrestClient (object):
         
     def getScanAttributes(self, filename, slide_id, sha256sum, http_url, st_size):
         obj = {}
-        obj['id'] = sha256sum
-        obj['slide_id'] = slide_id
-        obj['go_endpoint'] = self.endpoint_2
-        obj['go_path'] = '/scans/%s/%s.czi' % (slide_id,sha256sum)
-        obj['http_url'] = '%s/scans/%s/%s.czi' % (http_url,slide_id,sha256sum)
-        obj['original_filename'] = filename
-        obj['filename'] = '%s.czi' % sha256sum
-        obj['filesize'] = st_size
-        #obj['thumbnail'] = '%s/thumbnails/%s/%s.jpg' % (http_url,slide_id,sha256sum)
-        obj['tilesdir'] = '%s/' % slide_id
-        obj['zoomify'] = '%s/html/%s/%s.html' % (http_url,slide_id,sha256sum)
+        obj['ID'] = sha256sum
+        obj['Slide ID'] = slide_id
+        obj['GO Endpoint'] = self.endpoint_2
+        obj['GO Path'] = '/scans/%s/%s.czi' % (slide_id,sha256sum)
+        obj['HTTP URL'] = '%s/scans/%s/%s.czi' % (http_url,slide_id,sha256sum)
+        obj['Original Filename'] = filename
+        obj['Filename'] = '%s.czi' % sha256sum
+        obj['File Size'] = st_size
+        #obj['Thumbnail'] = '%s/thumbnails/%s/%s.jpg' % (http_url,slide_id,sha256sum)
+        #obj['Zoomify'] = '%s/html/%s/%s.html' % (http_url,slide_id,sha256sum)
         return obj
     
     def close(self):
