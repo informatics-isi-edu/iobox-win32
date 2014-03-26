@@ -37,9 +37,9 @@ _base_html = """
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-        <script type="text/javascript" src="/cirm-files/zoomify/ZoomifyImageViewer.js"></script>
+        <script type="text/javascript" src="/cirm-usc/zoomify/ZoomifyImageViewer.js"></script>
         <style type="text/css"> #myContainer { width:900px; height:550px; margin:auto; border:1px; border-style:solid; border-color:#696969;} </style>
-        <script type="text/javascript"> Z.showImage("myContainer", "/cirm-files/tiles/%(slide_id)s/%(scan_id)s", "zInitialZoom=50&zFullPageInitial=1&zLogoVisible=0&zSkinPath=/cirm-files/zoomify/Assets/Skins/Default"); </script>
+        <script type="text/javascript"> Z.showImage("myContainer", "/cirm-usc/tiles/%(slide_id)s/%(scan_id)s", "zInitialZoom=50&zFullPageInitial=1&zLogoVisible=0&zSkinPath=/cirm-usc/zoomify/Assets/Skins/Default"); </script>
     </head>
     <body>
         <div id="myContainer"></div>
