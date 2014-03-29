@@ -191,16 +191,29 @@ class ErmrestClient (object):
                 body.append(obj)
             url = '%s/entity/Scan' % self.path
             headers = {'Content-Type': 'application/json'}
+            go_transfer = False
             try:
                 self.send_request('POST', url, json.dumps(body), headers)
-                ret = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
+                go_transfer = True
             except ErmrestHTTPException, e:
                 if retry and e.status == CONFLICT:
-                    ret = self.transfer(file_from, file_to, sleep_time)
+                    go_transfer = True
                 else:
                     serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
-            except:
-                raise
+            except Exception, e:
+                et, ev, tb = sys.exc_info()
+                serviceconfig.logger.error('got POST exception "%s"' % str(ev))
+                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                return (None, None)
+            
+            if go_transfer == True:
+                try:
+                    ret = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
+                except Exception, e:
+                    et, ev, tb = sys.exc_info()
+                    serviceconfig.logger.error('got GO exception "%s"' % str(ev))
+                    serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                    return (None, None)
         return ret
                     
         

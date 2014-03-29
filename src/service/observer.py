@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 
 import win32file
 import win32con
@@ -79,6 +81,10 @@ class CirmObserver(object):
                             processFile(self, full_filename, False)
                         except IOError,e:
                             pass
+                        except Exception,e:
+                            et, ev, tb = sys.exc_info()
+                            serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
+                            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
         
     def stop(self):
         serviceconfig.logger.debug('stopping...')
