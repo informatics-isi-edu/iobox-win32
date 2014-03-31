@@ -146,6 +146,9 @@ def load():
     except ProtocolError as err:
         logger.error(err)
         return None
+    except Exception as err:
+        logger.error(err)
+        return None
     
     return CirmObserver(url=url, \
                               inbox=inbox, \
