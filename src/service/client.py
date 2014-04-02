@@ -200,7 +200,7 @@ class ErmrestClient (object):
                     go_transfer = True
                 else:
                     serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
-            except Exception, e:
+            except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got POST exception "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
@@ -209,7 +209,7 @@ class ErmrestClient (object):
             if go_transfer == True:
                 try:
                     ret = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
-                except Exception, e:
+                except:
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got GO exception "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
@@ -288,7 +288,7 @@ class ErmrestClient (object):
                 time.sleep(sleep_time)
                 code, reason, data = api.task(task_id)
             #self.cleanupFiles(sha256sum)
-        except Exception, e:
+        except:
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got transfer exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))

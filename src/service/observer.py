@@ -81,7 +81,7 @@ class CirmObserver(object):
                             processFile(self, full_filename, False)
                         except IOError,e:
                             pass
-                        except Exception,e:
+                        except:
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))

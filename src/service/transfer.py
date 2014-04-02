@@ -68,7 +68,7 @@ def recoverFiles(observer):
             serviceconfig.logger.debug('Recovering %s' % filename)
             try:
                 processFile(observer, filename, True)
-            except Exception,e:
+            except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))

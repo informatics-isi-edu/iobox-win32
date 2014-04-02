@@ -20,6 +20,8 @@ Load configuration for the Ermrest Outbox.
 import os
 import logging
 import json
+import sys
+import traceback
 
 from client import ErmrestClient, UnresolvedAddress, NetworkError, ProtocolError, MalformedURL
 from observer import CirmObserver
@@ -146,8 +148,10 @@ def load():
     except ProtocolError as err:
         logger.error(err)
         return None
-    except Exception as err:
-        logger.error(err)
+    except:
+        et, ev, tb = sys.exc_info()
+        logger.error('got INIT exception "%s"' % str(ev))
+        logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
         return None
     
     return CirmObserver(url=url, \
