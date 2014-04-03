@@ -66,6 +66,7 @@ def recoverFiles(observer):
         filename = '%s%s%s' % (observer.inbox, os.sep, f)
         if os.path.isfile(filename):
             serviceconfig.logger.debug('Recovering %s' % filename)
+            observer.client.sendMail('Recovering', 'Recovering file "%s"' % filename)
             try:
                 processFile(observer, filename, True)
             except:

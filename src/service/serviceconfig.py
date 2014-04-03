@@ -106,6 +106,16 @@ def load():
         logger.error('Rejected directory must be given.')
         return None
 
+    retry = cfg.get('retry', None)
+    if not retry:
+        logger.error('Retry directory must be given.')
+        return None
+
+    transfer = cfg.get('transfer', None)
+    if not transfer:
+        logger.error('Transfer directory must be given.')
+        return None
+
     username = cfg.get('username', None)
     if not username:
         logger.error('Ermrest username must be given.')
@@ -131,10 +141,21 @@ def load():
         logger.error('Destination endpoint must be given.')
         return None
 
+    mail_server = cfg.get('mail_server', None)
+    mail_sender = cfg.get('mail_sender', None)
+    mail_receiver = cfg.get('mail_receiver', None)
+
     # Establish Ermrest client connection
     try:
-        client = ErmrestClient(url, username, 
-                            password, endpoint_1, endpoint_2, goauthtoken)
+        client = ErmrestClient(baseuri=url, \
+                               username=username, \
+                               password=password, \
+                               endpoint_1=endpoint_1, \
+                               endpoint_2=endpoint_2, \
+                               mail_server=mail_server, \
+                               mail_sender=mail_sender, \
+                               mail_receiver=mail_receiver,
+                               use_goauth=goauthtoken)
         client.connect()
     except MalformedURL as err:
         logger.error(err)
@@ -158,6 +179,8 @@ def load():
                               inbox=inbox, \
                               outbox=outbox, \
                               rejected=rejected, \
+                              retry=retry, \
+                              transfer=transfer, \
                               pattern=pattern, \
                               bulk_ops_max=bulk_ops_max, \
                               http_url=http_url, \

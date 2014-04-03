@@ -27,6 +27,8 @@ class CirmObserver(object):
         self.inbox = kwargs.get("inbox")
         self.outbox = kwargs.get("outbox")
         self.rejected = kwargs.get("rejected")
+        self.retry = kwargs.get("retry")
+        self.transfer = kwargs.get("transfer")
         self.pattern = kwargs.get("pattern")
         self.client = kwargs.get("client")
         self.bulk_ops_max = kwargs.get("bulk_ops_max")
