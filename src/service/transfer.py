@@ -66,16 +66,17 @@ def recoverFiles(observer):
         filename = '%s%s%s' % (observer.inbox, os.sep, f)
         if os.path.isfile(filename):
             serviceconfig.logger.debug('Recovering %s' % filename)
-            observer.client.sendMail('Recovering', 'Recovering file "%s"' % filename)
             try:
                 processFile(observer, filename, True)
             except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                observer.client.sendMail('Error', 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), str(traceback.format_exception(et, ev, tb))))
 
 def moveFile(observer, filename):
     if os.path.isfile('%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename))):
         os.remove('%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename)))
     serviceconfig.logger.info('Rejected file: %s' % os.path.basename(filename))
     os.rename(filename, '%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename)))
+    observer.client.sendMail('Rejected File', 'The file "%s" was rejected.' % filename)
