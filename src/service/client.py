@@ -202,17 +202,18 @@ class ErmrestClient (object):
             try:
                 self.send_request('POST', url, json.dumps(body), headers)
                 go_transfer = True
+                self.sendMail('SUCCEEDED ERMREST', 'Registered:\n%s' % json.dumps(body, indent=4))
             except ErmrestHTTPException, e:
                 if retry and e.status == CONFLICT:
                     go_transfer = True
                 else:
                     serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
-                    self.sendMail('POST Error', 'Error generated during the POST request:\n%s' % str(e))
+                    self.sendMail('FAILURE ERMREST', 'Error generated during the POST request:\n%s' % str(e))
             except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got POST exception "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                self.sendMail('POST exception', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+                self.sendMail('FAILURE ERMREST', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
                 return (None, None)
             
             if go_transfer == True:
@@ -222,7 +223,7 @@ class ErmrestClient (object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got GO exception "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                    self.sendMail('GO exception', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
+                    self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
                     return (None, None)
         return ret
                     
@@ -303,7 +304,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got transfer exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            self.sendMail('GO exception', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
+            self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
             return (None, None)
             
         return (task_id, data['status'])

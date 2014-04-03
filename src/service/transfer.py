@@ -55,6 +55,7 @@ def processFile(observer, filename, retry):
         task_id, status = observer.client.add_subjects(fileobjs, observer.http_url, st_size, observer.bulk_ops_max, retry, sleep_time)
         if task_id and status == 'SUCCEEDED':
             serviceconfig.logger.info('Transfer %s: %s' % (filename, task_id))
+            self.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using the Globus Task ID %s' % (filename, task_id))
             if os.path.isfile('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename))):
                 os.remove('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
             os.rename(filename, '%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
@@ -72,11 +73,11 @@ def recoverFiles(observer):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                observer.client.sendMail('Error', 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), str(traceback.format_exception(et, ev, tb))))
+                observer.client.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), str(traceback.format_exception(et, ev, tb))))
 
 def moveFile(observer, filename):
     if os.path.isfile('%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename))):
         os.remove('%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename)))
     serviceconfig.logger.info('Rejected file: %s' % os.path.basename(filename))
     os.rename(filename, '%s%s%s' % (observer.rejected, os.sep, os.path.basename(filename)))
-    observer.client.sendMail('Rejected File', 'The file "%s" was rejected.' % filename)
+    observer.client.sendMail('FAILURE %s' % filename, 'The file "%s" was rejected.' % filename)

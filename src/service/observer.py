@@ -87,7 +87,7 @@ class CirmObserver(object):
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                            self.client.sendMail('Exception', 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), str(traceback.format_exception(et, ev, tb))))
+                            self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), str(traceback.format_exception(et, ev, tb))))
         
     def stop(self):
         serviceconfig.logger.debug('stopping...')
