@@ -55,7 +55,7 @@ def processFile(observer, filename, action):
         task_id, status, lastAction = observer.client.add_subjects(fileobjs, observer.http_url, st_size, observer.bulk_ops_max, action, sleep_time)
         if task_id and status == 'SUCCEEDED':
             serviceconfig.logger.info('Transfer %s: %s' % (filename, task_id))
-            self.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using the Globus Task ID %s' % (filename, task_id))
+            observer.client.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using the Globus Task ID %s' % (filename, task_id))
             if os.path.isfile('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename))):
                 os.remove('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
             os.rename(filename, '%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
