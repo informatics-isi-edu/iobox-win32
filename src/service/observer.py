@@ -6,8 +6,10 @@ import win32file
 import win32con
 
 import time
-from transfer import processFile, recoverFiles
+from transfer import processFile, recoverFiles, processRetry
 import serviceconfig
+
+from threading import Timer
 
 ACTIONS = {
     1 : "Created",
@@ -33,6 +35,7 @@ class CirmObserver(object):
         self.client = kwargs.get("client")
         self.bulk_ops_max = kwargs.get("bulk_ops_max")
         self.http_url = kwargs.get("http_url")
+        processRetry(self)
         recoverFiles(self)
         self.hDir = win32file.CreateFile (
             self.inbox,
@@ -43,6 +46,9 @@ class CirmObserver(object):
             win32con.FILE_FLAG_BACKUP_SEMANTICS,
             None
         )
+        self.timeout = kwargs.get("timeout")
+        self.timer = Timer(1, self.retryFiles, kwargs={'timeout': self.timeout*60})
+        self.timer.start()
         
     def start(self):
         self.isAlive = True
@@ -80,7 +86,7 @@ class CirmObserver(object):
                             time.sleep(1)
                             f = open(full_filename)
                             f.close()
-                            processFile(self, full_filename, False)
+                            processFile(self, full_filename, 'new')
                         except IOError,e:
                             pass
                         except:
@@ -88,6 +94,20 @@ class CirmObserver(object):
                             serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                             self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), str(traceback.format_exception(et, ev, tb))))
+        
+    def retryFiles(self, timeout):
+        serviceconfig.logger.debug('starting the Timer...')
+        # sleep maximum 10 seconds such that the Timer can be stopped
+        count = timeout / 10
+        i = 0
+        self.isAlive = True
+        while self.isAlive:
+            sleep(10)
+            i+=1
+            if i >= count:
+                processRetry(self)
+                i = 0
+        serviceconfig.logger.debug('Timer has stopped.')
         
     def stop(self):
         serviceconfig.logger.debug('stopping...')

@@ -173,7 +173,7 @@ class ErmrestClient (object):
             resp = self.send_request("POST", "/ermrest/authn/session", "username=%s&password=%s" % (self.username, self.password), headers)
             self.header = dict(Cookie=resp.getheader("set-cookie"))
         
-    def add_subjects(self, fileobjs, http_url, st_size, bulk_ops_max, retry, sleep_time):
+    def add_subjects(self, fileobjs, http_url, st_size, bulk_ops_max, action, sleep_time):
         """Registers a list of files in ermrest using a single request.
         
         Keyword arguments:
@@ -182,7 +182,7 @@ class ErmrestClient (object):
         
         """
         
-        ret = (None, None)
+        ret = (None, None, None)
         chunks = len(fileobjs) / bulk_ops_max + 1
         for i in range(0, chunks):
             start = i * bulk_ops_max
@@ -196,38 +196,40 @@ class ErmrestClient (object):
                 file_to = '/%s' % f['file_to']
                 obj = self.getScanAttributes(filename, slide_id, sha256sum, http_url,st_size)
                 body.append(obj)
-            url = '%s/entity/Scan' % self.path
-            headers = {'Content-Type': 'application/json'}
-            go_transfer = False
-            try:
-                self.send_request('POST', url, json.dumps(body), headers)
-                go_transfer = True
-                self.sendMail('SUCCEEDED ERMREST', 'Registered:\n%s' % json.dumps(body, indent=4))
-            except ErmrestHTTPException, e:
-                if retry and e.status == CONFLICT:
+            go_transfer = True
+            if action != 'transfer':
+                url = '%s/entity/Scan' % self.path
+                headers = {'Content-Type': 'application/json'}
+                go_transfer = False
+                try:
+                    self.send_request('POST', url, json.dumps(body), headers)
                     go_transfer = True
-                else:
-                    serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
-                    self.sendMail('FAILURE ERMREST', 'Error generated during the POST request:\n%s' % str(e))
-            except:
-                et, ev, tb = sys.exc_info()
-                serviceconfig.logger.error('got POST exception "%s"' % str(ev))
-                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                self.sendMail('FAILURE ERMREST', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
-                return (None, None)
+                    self.sendMail('SUCCEEDED ERMREST', 'Registered:\n%s' % json.dumps(body, indent=4))
+                except ErmrestHTTPException, e:
+                    if action == 'recover' and e.status == CONFLICT:
+                        go_transfer = True
+                    else:
+                        serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
+                        self.sendMail('FAILURE ERMREST', 'Error generated during the POST request:\n%s' % str(e))
+                except:
+                    et, ev, tb = sys.exc_info()
+                    serviceconfig.logger.error('got POST exception "%s"' % str(ev))
+                    serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                    self.sendMail('FAILURE ERMREST', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+                    return (None, None, 'retry')
             
             if go_transfer == True:
                 try:
-                    ret = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
+                    task_id, status = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
+                    ret = (task_id, status, 'transfer')
                 except:
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got GO exception "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                     self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
-                    return (None, None)
+                    return (None, None, 'transfer')
         return ret
                     
-        
     def getScanAttributes(self, filename, slide_id, sha256sum, http_url, st_size):
         obj = {}
         obj['ID'] = sha256sum

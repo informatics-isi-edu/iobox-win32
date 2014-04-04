@@ -144,6 +144,7 @@ def load():
     mail_server = cfg.get('mail_server', None)
     mail_sender = cfg.get('mail_sender', None)
     mail_receiver = cfg.get('mail_receiver', None)
+    timeout = cfg.get('timeout', 30)
 
     # Establish Ermrest client connection
     try:
@@ -184,5 +185,6 @@ def load():
                               pattern=pattern, \
                               bulk_ops_max=bulk_ops_max, \
                               http_url=http_url, \
+                              timeout=timeout, \
                               client=client)
 
