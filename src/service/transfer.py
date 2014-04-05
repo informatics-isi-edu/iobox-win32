@@ -99,6 +99,7 @@ def processRetry(observer):
             try:
                 observer.client.connect();
             except:
+                et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got exception during reconnecting "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                 observer.client.sendMail('FAILURE Reconnect', 'Exception generated during reconnecting to ERMREST:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
