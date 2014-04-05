@@ -95,6 +95,13 @@ def moveFile(observer, filename, action):
 def processRetry(observer):
     try:
         retryFiles = [ f for f in os.listdir(observer.retry) if os.path.isfile(os.path.join(observer.retry,f)) ]
+        if len(retryFiles) > 0:
+            try:
+                observer.client.connect();
+            except:
+                serviceconfig.logger.error('got exception during reconnecting "%s"' % str(ev))
+                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                observer.client.sendMail('FAILURE Reconnect', 'Exception generated during reconnecting to ERMREST:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
         for f in retryFiles:
             processFile(observer, os.path.join(observer.retry,f), 'retry')
             
