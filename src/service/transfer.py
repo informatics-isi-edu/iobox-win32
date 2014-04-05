@@ -90,7 +90,7 @@ def moveFile(observer, filename, action):
         os.remove('%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
     serviceconfig.logger.info('Rejected file: %s' % os.path.basename(filename))
     os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
-    observer.client.sendMail('FAILURE %s' % filename, 'The file "%s" was moved to the "%s" directory.' % (filename, action))
+    observer.client.sendMail('FAILURE %s' % os.path.basename(filename), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
 
 def processRetry(observer):
     try:
@@ -105,5 +105,5 @@ def processRetry(observer):
         et, ev, tb = sys.exc_info()
         serviceconfig.logger.error('got Processing exception during retry "%s"' % str(ev))
         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-        observer.client.sendMail('FAILURE %s' % f, 'Exception generated during the retry process:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+        observer.client.sendMail('FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
         

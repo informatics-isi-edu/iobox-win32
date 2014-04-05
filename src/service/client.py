@@ -211,6 +211,7 @@ class ErmrestClient (object):
                     else:
                         serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
                         self.sendMail('FAILURE ERMREST', 'Error generated during the POST request:\n%s' % str(e))
+                        return (None, None, 'retry')
                 except:
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got POST exception "%s"' % str(ev))
