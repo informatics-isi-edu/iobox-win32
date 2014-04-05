@@ -101,12 +101,18 @@ class CirmObserver(object):
         count = timeout / 10
         i = 0
         self.isAlive = True
-        while self.isAlive:
-            sleep(10)
-            i+=1
-            if i >= count:
-                processRetry(self)
-                i = 0
+        try:
+            while self.isAlive:
+                time.sleep(10)
+                i+=1
+                if i >= count:
+                    processRetry(self)
+                    i = 0
+        except:
+            et, ev, tb = sys.exc_info()
+            serviceconfig.logger.error('got Retry exception "%s"' % str(ev))
+            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            self.client.sendMail('FAILURE Timer' % file, 'Exception generated during the retrying process:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
         serviceconfig.logger.debug('Timer has stopped.')
         
     def stop(self):
