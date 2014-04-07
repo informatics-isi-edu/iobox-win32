@@ -216,7 +216,7 @@ class ErmrestClient (object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got POST exception "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                    self.sendMail('FAILURE ERMREST', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+                    self.sendMail('FAILURE ERMREST', 'Exception generated during the POST request:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     return (None, None, 'retry')
             
             if go_transfer == True:
@@ -227,7 +227,7 @@ class ErmrestClient (object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('got GO exception "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                    self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
+                    self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     return (None, None, 'transfer')
         return ret
                     
@@ -307,7 +307,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got transfer exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), str(traceback.format_exception(et, ev, tb))))
+            self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return (None, None)
             
         return (task_id, data['status'])

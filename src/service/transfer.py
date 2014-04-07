@@ -73,7 +73,7 @@ def recoverFiles(observer):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                observer.client.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), str(traceback.format_exception(et, ev, tb))))
+                observer.client.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
 
 def moveFile(observer, filename, action):
     if action == 'rejected':
@@ -102,7 +102,7 @@ def processRetry(observer):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got exception during reconnecting "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                observer.client.sendMail('FAILURE Reconnect', 'Exception generated during reconnecting to ERMREST:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+                observer.client.sendMail('FAILURE Reconnect', 'Exception generated during reconnecting to ERMREST:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         for f in retryFiles:
             processFile(observer, os.path.join(observer.retry,f), 'retry')
             
@@ -113,5 +113,5 @@ def processRetry(observer):
         et, ev, tb = sys.exc_info()
         serviceconfig.logger.error('got Processing exception during retry "%s"' % str(ev))
         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-        observer.client.sendMail('FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+        observer.client.sendMail('FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         

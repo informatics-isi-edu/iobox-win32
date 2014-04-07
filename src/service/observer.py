@@ -93,7 +93,7 @@ class CirmObserver(object):
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                            self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), str(traceback.format_exception(et, ev, tb))))
+                            self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         
     def retryFiles(self, timeout):
         serviceconfig.logger.debug('starting the Timer...')
@@ -112,7 +112,7 @@ class CirmObserver(object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Retry exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            self.client.sendMail('FAILURE Timer' % file, 'Exception generated during the retrying process:\n%s\n%s' % (str(ev), str(traceback.format_exception(et, ev, tb))))
+            self.client.sendMail('FAILURE Timer' % file, 'Exception generated during the retrying process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         serviceconfig.logger.debug('Timer has stopped.')
         
     def stop(self):
