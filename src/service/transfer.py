@@ -4,6 +4,7 @@ import re
 import serviceconfig
 import sys
 import traceback
+import time
 
 def sha256sum(fpath):
     """Return hex digest string like sha256sum utility would compute."""
@@ -115,3 +116,18 @@ def processRetry(observer):
         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
         observer.client.sendMail('FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         
+def fileIsReady(observer, filename):
+    try:
+        time.sleep(1)
+        f = open(filename)
+        f.close()
+        return True
+    except IOError,e:
+        return False
+    except:
+        et, ev, tb = sys.exc_info()
+        serviceconfig.logger.error('got Processing new file exception "%s"' % str(ev))
+        serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+        observer.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+        return None
+    

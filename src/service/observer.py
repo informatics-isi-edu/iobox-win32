@@ -6,7 +6,7 @@ import win32file
 import win32con
 
 import time
-from transfer import processFile, recoverFiles, processRetry
+from transfer import processFile, recoverFiles, processRetry, fileIsReady
 import serviceconfig
 
 from threading import Timer
@@ -73,6 +73,7 @@ class CirmObserver(object):
                 None,
                 None
             )
+            notified = []
             for action, file in results:
                 if file == 'stop_service.txt':
                     time.sleep(1)
@@ -82,18 +83,31 @@ class CirmObserver(object):
                     full_filename = os.path.join(self.inbox, file)
                     action = ACTIONS.get (action, "Unknown")
                     if action == 'Created' or action == 'Updated':
-                        try:
-                            time.sleep(1)
-                            f = open(full_filename)
-                            f.close()
-                            processFile(self, full_filename, 'new')
-                        except IOError,e:
-                            pass
-                        except:
-                            et, ev, tb = sys.exc_info()
-                            serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
-                            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                            self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        ready = fileIsReady(self, full_filename)
+                        if ready == True:
+                            try:
+                                processFile(self, full_filename, 'new')
+                            except:
+                                et, ev, tb = sys.exc_info()
+                                serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
+                                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                                self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        elif ready == False:
+                            notified.append(file)
+            newFiles = [ f for f in os.listdir(observer.inbox) if f not in notified and os.path.isfile(os.path.join(observer.inbox,f)) ]
+            for f in newFiles:
+                if not self.isAlive:
+                    break
+                full_filename = '%s%s%s' % (observer.inbox, os.sep, f)
+                ready = fileIsReady(self, full_filename)
+                if ready == True:
+                    try:
+                        processFile(self, full_filename, 'new')
+                    except:
+                        et, ev, tb = sys.exc_info()
+                        serviceconfig.logger.error('got Processing new file exception "%s"' % str(ev))
+                        serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                        self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         
     def retryFiles(self, timeout):
         serviceconfig.logger.debug('starting the Timer...')
