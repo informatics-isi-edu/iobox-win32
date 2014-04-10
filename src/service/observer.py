@@ -94,11 +94,11 @@ class CirmObserver(object):
                                 self.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                         elif ready == False:
                             notified.append(file)
-            newFiles = [ f for f in os.listdir(observer.inbox) if f not in notified and os.path.isfile(os.path.join(observer.inbox,f)) ]
+            newFiles = [ f for f in os.listdir(self.inbox) if f not in notified and os.path.isfile(os.path.join(self.inbox,f)) ]
             for f in newFiles:
                 if not self.isAlive:
                     break
-                full_filename = '%s%s%s' % (observer.inbox, os.sep, f)
+                full_filename = '%s%s%s' % (self.inbox, os.sep, f)
                 ready = fileIsReady(self, full_filename)
                 if ready == True:
                     try:
