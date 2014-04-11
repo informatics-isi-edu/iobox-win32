@@ -211,7 +211,7 @@ class ErmrestClient (object):
                     elif e.status == CONFLICT:
                         serviceconfig.logger.error('Error(CONFLICT) during POST attempt:\n%s' % str(e))
                         self.sendMail('FAILURE ERMREST', 'Error(CONFLICT) generated during the POST request:\n%s' % str(e))
-                        return (None, None, 'reject')
+                        return (None, None, 'rejected')
                     else:
                         serviceconfig.logger.error('Error during POST attempt:\n%s' % str(e))
                         self.sendMail('FAILURE ERMREST', 'Error generated during the POST request:\n%s' % str(e))
