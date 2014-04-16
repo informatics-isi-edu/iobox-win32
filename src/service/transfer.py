@@ -5,6 +5,8 @@ import serviceconfig
 import sys
 import traceback
 import time
+import winerror
+import errno
 
 def sha256sum(fpath):
     """Return hex digest string like sha256sum utility would compute."""
@@ -119,15 +121,35 @@ def processRetry(observer):
 def fileIsReady(observer, filename):
     try:
         time.sleep(1)
-        f = open(filename)
-        f.close()
+        lockFile = filename + ".lckchk"
+        if(os.path.exists(lockFile)):
+            os.remove(lockFile)
+        os.rename(filename, lockFile)
+        time.sleep(1)
+        os.rename(lockFile, filename)
         return True
+    except WindowsError, e:
+        if e.winerror == winerror.ERROR_SHARING_VIOLATION:
+            return False
+        else:
+            et, ev, tb = sys.exc_info()
+            serviceconfig.logger.error('got WindowsError on checking if the file "%s" is ready for procesing.' % str(ev))
+            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            return None
     except IOError,e:
-        return False
+        if e.errno == errno.EACCES:
+            return False
+        else:
+            et, ev, tb = sys.exc_info()
+            serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
+            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            return None
     except:
         et, ev, tb = sys.exc_info()
-        serviceconfig.logger.error('got Processing new file exception "%s"' % str(ev))
+        serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-        observer.client.sendMail('FAILURE %s' % file, 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+        observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         return None
     
