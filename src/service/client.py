@@ -174,7 +174,7 @@ class ErmrestClient (object):
             resp = self.send_request("POST", "/ermrest/authn/session", "username=%s&password=%s" % (self.username, self.password), headers)
             self.header = dict(Cookie=resp.getheader("set-cookie"))
         
-    def add_subjects(self, fileobjs, http_url, st_size, bulk_ops_max, action, sleep_time):
+    def add_subjects(self, observer, fileobjs, http_url, st_size, bulk_ops_max, action, sleep_time):
         """Registers a list of files in ermrest using a single request.
         
         Keyword arguments:
@@ -227,7 +227,7 @@ class ErmrestClient (object):
             if go_transfer == True:
                 try:
                     serviceconfig.logger.debug('Start convert')
-                    tiff = self.convert(file_from, slide_id, sha256sum)
+                    tiff = self.convert(observer, file_from, slide_id, sha256sum)
                     serviceconfig.logger.debug('End convert')
                     if not tiff:
                         return (None, None, None)
@@ -271,7 +271,7 @@ class ErmrestClient (object):
         finally:
             self.webconn = None
 
-    def convert(self, file_from, slide_id, sha256sum):
+    def convert(self, observer, file_from, slide_id, sha256sum):
         try:
             if os.path.isdir('%s%s%s' % (observer.tiff, os.sep, sha256sum)):
                 shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))

@@ -55,7 +55,7 @@ def processFile(observer, filename, action):
                'file_to': '/scans/%s/%s.czi' % (slide_id, shasum)}
         fileobjs.append(obj)
         serviceconfig.logger.info('Registering file: %s' % os.path.basename(filename))
-        task_id, status, lastAction = observer.client.add_subjects(fileobjs, observer.http_url, st_size, observer.bulk_ops_max, action, sleep_time)
+        task_id, status, lastAction = observer.client.add_subjects(observer, fileobjs, observer.http_url, st_size, observer.bulk_ops_max, action, sleep_time)
         if task_id and status == 'SUCCEEDED':
             serviceconfig.logger.info('Transfer %s: %s' % (filename, task_id))
             observer.client.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using the Globus Task ID %s' % (filename, task_id))
