@@ -7,6 +7,7 @@ import traceback
 import time
 import winerror
 import errno
+import shutil
 
 def sha256sum(fpath):
     """Return hex digest string like sha256sum utility would compute."""
@@ -62,6 +63,7 @@ def processFile(observer, filename, action):
             if os.path.isfile('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename))):
                 os.remove('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
             os.rename(filename, '%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
+            shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))
         elif lastAction != None and lastAction != action:
                 moveFile(observer, filename, lastAction)
 

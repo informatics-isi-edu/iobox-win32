@@ -226,9 +226,7 @@ class ErmrestClient (object):
             
             if go_transfer == True:
                 try:
-                    serviceconfig.logger.debug('Start convert')
                     tiff = self.convert(observer, file_from, slide_id, sha256sum)
-                    serviceconfig.logger.debug('End convert')
                     if not tiff:
                         return (None, None, None)
                     files = [(create_uri_friendly_file_path(file_from), file_to), (tiff, '/tiff/%s' % slide_id)]
@@ -278,13 +276,16 @@ class ErmrestClient (object):
             os.mkdir('%s%s%s' % (observer.tiff, os.sep, sha256sum))
             args = [observer.convertor, 'CL', '-i', file_from, '-t', '%s%s%s' % (observer.tiff, os.sep, sha256sum), '-b']
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            serviceconfig.logger.debug('Started the convertor')
             stdoutdata, stderrdata = p.communicate()
-            if p.returncode == 0:
+            returncode = p.returncode
+            serviceconfig.logger.debug('Convertor ended: %d' % returncode)
+            if returncode == 0:
                 f = self.getTiffFile('%s%s%s' % (observer.tiff, os.sep, sha256sum))
                 return f
             else:
-                serviceconfig.logger.error('got convert exception "%s\n\n%s"' % (stdoutdata, stderrdata))
-                self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s"\n' % file_from)
+                serviceconfig.logger.error('got convert exception:\nreturncode: %d\nstdout: %s\nstderr: %s\n' % (returncode, stdoutdata, stderrdata))
+                self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s"\nreturncode: %d\nstdout: %s\nstderr: %s\n' % (file_from, returncode, stdoutdata, stderrdata))
                 return None
         except:
             et, ev, tb = sys.exc_info()
