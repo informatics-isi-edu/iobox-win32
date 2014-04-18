@@ -231,7 +231,7 @@ class ErmrestClient (object):
                     serviceconfig.logger.debug('End convert')
                     if not tiff:
                         return (None, None, None)
-                    files = [(file_from, file_to), (tiff, '/tiff/%s' % slide_id)]
+                    files = [(create_uri_friendly_file_path(file_from), file_to), (tiff, '/tiff/%s' % slide_id)]
                     task_id, status = self.transfer(files, sleep_time, slide_id, sha256sum)
                     ret = (task_id, status, 'transfer')
                 except:
@@ -283,7 +283,7 @@ class ErmrestClient (object):
                 f = self.getTiffFile('%s%s%s' % (observer.tiff, os.sep, sha256sum))
                 return f
             else:
-                serviceconfig.logger.error('got convert exception "%s"' % stderrdata)
+                serviceconfig.logger.error('got convert exception "%s\n\n%s"' % (stdoutdata, stderrdata))
                 self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s"\n' % file_from)
                 return None
         except:

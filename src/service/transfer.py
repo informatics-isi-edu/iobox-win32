@@ -51,7 +51,7 @@ def processFile(observer, filename, action):
         obj = {'slide_id': slide_id, 
                'filename': os.path.basename(filename),
                'sha256sum': shasum,
-               'file_from': create_uri_friendly_file_path(filename),
+               'file_from': filename,
                'file_to': '/scans/%s/%s.czi' % (slide_id, shasum)}
         fileobjs.append(obj)
         serviceconfig.logger.info('Registering file: %s' % os.path.basename(filename))
