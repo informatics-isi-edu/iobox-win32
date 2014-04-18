@@ -281,7 +281,7 @@ class ErmrestClient (object):
             stdoutdata, stderrdata = p.communicate()
             if p.returncode == 0:
                 f = self.getTiffFile('%s%s%s' % (observer.tiff, os.sep, sha256sum))
-                return '%s%s%s%s%s' % (observer.tiff, os.sep, sha256sum, os.sep, f)
+                return f
             else:
                 serviceconfig.logger.error('got convert exception "%s"' % stderrdata)
                 self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s"\n' % file_from)
