@@ -116,6 +116,16 @@ def load():
         logger.error('Transfer directory must be given.')
         return None
 
+    convertor = cfg.get('convertor', None)
+    if not convertor:
+        logger.error('Convertor application must be given.')
+        return None
+
+    tiff = cfg.get('tiff', None)
+    if not tiff:
+        logger.error('TIFF directory must be given.')
+        return None
+
     username = cfg.get('username', None)
     if not username:
         logger.error('Ermrest username must be given.')
@@ -182,6 +192,8 @@ def load():
                               rejected=rejected, \
                               retry=retry, \
                               transfer=transfer, \
+                              convertor=convertor, \
+                              tiff=tiff, \
                               pattern=pattern, \
                               bulk_ops_max=bulk_ops_max, \
                               http_url=http_url, \

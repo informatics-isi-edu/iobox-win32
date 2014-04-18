@@ -19,6 +19,7 @@ Raw network client for HTTP(S) communication with ERMREST service.
 """
 
 import os
+import subprocess
 import json
 import base64
 import urlparse
@@ -225,7 +226,13 @@ class ErmrestClient (object):
             
             if go_transfer == True:
                 try:
-                    task_id, status = self.transfer(file_from, file_to, sleep_time, slide_id, sha256sum)
+                    serviceconfig.logger.debug('Start convert')
+                    tiff = self.convert(file_from, slide_id, sha256sum)
+                    serviceconfig.logger.debug('End convert')
+                    if not tiff:
+                        return (None, None, None)
+                    files = [(file_from, file_to), (tiff, '/tiff/%s' % slide_id)]
+                    task_id, status = self.transfer(files, sleep_time, slide_id, sha256sum)
                     ret = (task_id, status, 'transfer')
                 except:
                     et, ev, tb = sys.exc_info()
@@ -264,7 +271,33 @@ class ErmrestClient (object):
         finally:
             self.webconn = None
 
-    def transfer(self, file_from, file_to, sleep_time, slide_id, sha256sum):
+    def convert(self, file_from, slide_id, sha256sum):
+        try:
+            if os.path.isdir('%s%s%s' % (observer.tiff, os.sep, sha256sum)):
+                shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))
+            os.mkdir('%s%s%s' % (observer.tiff, os.sep, sha256sum))
+            args = [observer.convertor, 'CL', '-i', file_from, '-t', '%s%s%s' % (observer.tiff, os.sep, sha256sum), '-b']
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdoutdata, stderrdata = p.communicate()
+            if p.returncode == 0:
+                f = self.getTiffFile('%s%s%s' % (observer.tiff, os.sep, sha256sum))
+                return '%s%s%s%s%s' % (observer.tiff, os.sep, sha256sum, os.sep, f)
+            else:
+                serviceconfig.logger.error('got convert exception "%s"' % stderrdata)
+                self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s"\n' % file_from)
+                return None
+        except:
+            et, ev, tb = sys.exc_info()
+            serviceconfig.logger.error('got convert exception "%s"' % str(ev))
+            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            self.sendMail('FAILURE GLOBUS', 'Exception generated during the TIFF conversion for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            return None
+            
+    def getTiffFile(self, path):
+        f = path
+        return f
+        
+    def transfer(self, files, sleep_time, slide_id, sha256sum):
         label = None
         # create the client
         args = ['transfer.py']
@@ -293,7 +326,11 @@ class ErmrestClient (object):
             # start transfer
             code, message, data = api.transfer_submission_id()
             t = api_client.Transfer(data['value'], self.endpoint_1, self.endpoint_2, deadline=datetime.utcnow() + timedelta(minutes=10), label=label)
-            t.add_item(file_from, file_to)
+            for file_from, file_to in files:
+                if os.path.isfile(file_from):
+                    t.add_item(file_from, file_to)
+                else:
+                    t.add_item(create_uri_friendly_file_path(file_from), file_to, recursive=True)
             #self.prepareFiles(sha256sum, slide_id)
             #t.add_item(create_uri_friendly_file_path('C:\\Users\\serban\\Documents\\cirm_temp\\%s' % sha256sum), '/tiles/%s/%s' % (slide_id, sha256sum), recursive=True)
             #t.add_item(create_uri_friendly_file_path('C:\\Users\\serban\\Documents\\cirm_temp\\%s.jpeg' % sha256sum), '/thumbnails/%s/%s.jpeg' % (slide_id, sha256sum))
@@ -311,6 +348,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got transfer exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            file_from, file_to = files[0]
             self.sendMail('FAILURE GLOBUS', 'Exception generated during the Globus transfer for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return (None, None)
             
