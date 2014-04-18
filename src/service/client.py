@@ -291,7 +291,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got convert exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            self.sendMail('FAILURE GLOBUS', 'Exception generated during the TIFF conversion for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            self.sendMail('FAILURE TIFF', 'Exception generated during the TIFF conversion for the file "%s":\n%s\n%s' % (file_from, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return None
             
     def getTiffFile(self, path):
