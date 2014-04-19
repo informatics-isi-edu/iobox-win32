@@ -229,7 +229,7 @@ class ErmrestClient (object):
                     tiff = self.convert(observer, file_from, slide_id, sha256sum)
                     if not tiff:
                         return (None, None, None)
-                    files = [(create_uri_friendly_file_path(file_from), file_to), (tiff, '/tiff/%s' % slide_id)]
+                    files = [(file_from, file_to), (tiff, '/tiff/%s' % slide_id)]
                     task_id, status = self.transfer(files, sleep_time, slide_id, sha256sum)
                     ret = (task_id, status, 'transfer')
                 except:
@@ -280,7 +280,7 @@ class ErmrestClient (object):
             stdoutdata, stderrdata = p.communicate()
             returncode = p.returncode
             serviceconfig.logger.debug('Convertor ended: %d' % returncode)
-            if returncode == 0:
+            if returncode == 0 or returncode == 255:
                 f = self.getTiffFile('%s%s%s' % (observer.tiff, os.sep, sha256sum))
                 return f
             else:
@@ -329,7 +329,7 @@ class ErmrestClient (object):
             t = api_client.Transfer(data['value'], self.endpoint_1, self.endpoint_2, deadline=datetime.utcnow() + timedelta(minutes=10), label=label)
             for file_from, file_to in files:
                 if os.path.isfile(file_from):
-                    t.add_item(file_from, file_to)
+                    t.add_item(create_uri_friendly_file_path(file_from), file_to)
                 else:
                     t.add_item(create_uri_friendly_file_path(file_from), file_to, recursive=True)
             #self.prepareFiles(sha256sum, slide_id)
