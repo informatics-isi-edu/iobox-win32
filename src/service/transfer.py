@@ -63,7 +63,7 @@ def processFile(observer, filename, action):
             if os.path.isfile('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename))):
                 os.remove('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
             os.rename(filename, '%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
-            shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))
+            shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, shasum))
         elif lastAction != None and lastAction != action:
                 moveFile(observer, filename, lastAction)
 
