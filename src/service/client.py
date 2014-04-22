@@ -275,7 +275,7 @@ class ErmrestClient (object):
                 shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))
             os.mkdir('%s%s%s' % (observer.tiff, os.sep, sha256sum))
             args = [observer.convertor, 'CL', '-i', file_from, '-t', '%s%s%s' % (observer.tiff, os.sep, sha256sum), '-b']
-            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NEW_CONSOLE)
             serviceconfig.logger.debug('Started the convertor')
             stdoutdata, stderrdata = p.communicate()
             returncode = p.returncode
