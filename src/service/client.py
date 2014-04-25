@@ -274,7 +274,7 @@ class ErmrestClient (object):
             if os.path.isdir('%s%s%s' % (observer.tiff, os.sep, sha256sum)):
                 shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, sha256sum))
             os.mkdir('%s%s%s' % (observer.tiff, os.sep, sha256sum))
-            args = [observer.convertor, 'CL', '-i', file_from, '-t', '%s%s%s' % (observer.tiff, os.sep, sha256sum), '-b']
+            args = [observer.convertor, 'XML', '-x', observer.job, '-i', file_from, '-o', '%s%s%s' % (observer.tiff, os.sep, sha256sum), '-b']
             p = subprocess.Popen(args, creationflags=subprocess.CREATE_NEW_CONSOLE)
             serviceconfig.logger.debug('Started the convertor')
             p.wait()

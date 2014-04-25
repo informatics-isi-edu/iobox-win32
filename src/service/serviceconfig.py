@@ -92,38 +92,43 @@ def load():
     bulk_ops_max = int(cfg.get('bulk_ops_max', __BULK_OPS_MAX))
     
     inbox = cfg.get('inbox', None)
-    if not inbox:
-        logger.error('Inbox directory must be given.')
+    if not inbox or not isdir(inbox):
+        logger.error('Inbox directory must be given and exist.')
         return None
 
     outbox = cfg.get('outbox', None)
-    if not outbox:
-        logger.error('Outbox directory must be given.')
+    if not outbox or not isdir(outbox):
+        logger.error('Outbox directory must be given and exist.')
         return None
 
     rejected = cfg.get('rejected', None)
-    if not rejected:
-        logger.error('Rejected directory must be given.')
+    if not rejected or not isdir(rejected):
+        logger.error('Rejected directory must be given and exist.')
         return None
 
     retry = cfg.get('retry', None)
-    if not retry:
-        logger.error('Retry directory must be given.')
+    if not retry or not isdir(retry):
+        logger.error('Retry directory must be given and exist.')
         return None
 
     transfer = cfg.get('transfer', None)
-    if not transfer:
-        logger.error('Transfer directory must be given.')
+    if not transfer or not isdir(transfer):
+        logger.error('Transfer directory must be given and exist.')
         return None
 
     convertor = cfg.get('convertor', None)
-    if not convertor:
-        logger.error('Convertor application must be given.')
+    if not convertor or not isfile(convertor):
+        logger.error('Convertor application must be given and exist.')
+        return None
+
+    job = cfg.get('job', None)
+    if not job or not isfile(job):
+        logger.error('Job file must be given and exist.')
         return None
 
     tiff = cfg.get('tiff', None)
-    if not tiff:
-        logger.error('TIFF directory must be given.')
+    if not tiff or not isdir(tiff):
+        logger.error('TIFF directory must be given and exist.')
         return None
 
     username = cfg.get('username', None)
@@ -194,6 +199,7 @@ def load():
                               transfer=transfer, \
                               convertor=convertor, \
                               tiff=tiff, \
+                              job=job, \
                               pattern=pattern, \
                               bulk_ops_max=bulk_ops_max, \
                               http_url=http_url, \

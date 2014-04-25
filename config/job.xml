@@ -1,0 +1,20 @@
+<Job xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+     xmlns:xs="http://www.w3.org/2001/XMLSchema-instance">
+
+  <InputFile>C:\foo</InputFile>
+  <OutputFolder>C:\bar</OutputFolder>
+
+  <Channel_Names>true</Channel_Names>
+  <Attachments>true</Attachments>
+
+  <BigTIFF>true</BigTIFF>
+  <Pyramid>true</Pyramid>
+  <TileSize>
+    <Width>512</Width>
+    <Height>512</Height>
+  </TileSize>
+
+  <Parallel_Writers>5</Parallel_Writers>
+
+  <Downscale_Factor>x2</Downscale_Factor>
+</Job>

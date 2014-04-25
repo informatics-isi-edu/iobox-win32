@@ -33,6 +33,7 @@ class CirmObserver(object):
         self.transfer = kwargs.get("transfer")
         self.convertor = kwargs.get("convertor")
         self.tiff = kwargs.get("tiff")
+        self.job = kwargs.get("job")
         self.pattern = kwargs.get("pattern")
         self.client = kwargs.get("client")
         self.bulk_ops_max = kwargs.get("bulk_ops_max")
