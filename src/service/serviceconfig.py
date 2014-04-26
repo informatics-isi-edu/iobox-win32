@@ -92,42 +92,42 @@ def load():
     bulk_ops_max = int(cfg.get('bulk_ops_max', __BULK_OPS_MAX))
     
     inbox = cfg.get('inbox', None)
-    if not inbox or not isdir(inbox):
+    if not inbox or not os.path.isdir(inbox):
         logger.error('Inbox directory must be given and exist.')
         return None
 
     outbox = cfg.get('outbox', None)
-    if not outbox or not isdir(outbox):
+    if not outbox or not os.path.isdir(outbox):
         logger.error('Outbox directory must be given and exist.')
         return None
 
     rejected = cfg.get('rejected', None)
-    if not rejected or not isdir(rejected):
+    if not rejected or not os.path.isdir(rejected):
         logger.error('Rejected directory must be given and exist.')
         return None
 
     retry = cfg.get('retry', None)
-    if not retry or not isdir(retry):
+    if not retry or not os.path.isdir(retry):
         logger.error('Retry directory must be given and exist.')
         return None
 
     transfer = cfg.get('transfer', None)
-    if not transfer or not isdir(transfer):
+    if not transfer or not os.path.isdir(transfer):
         logger.error('Transfer directory must be given and exist.')
         return None
 
     convertor = cfg.get('convertor', None)
-    if not convertor or not isfile(convertor):
+    if not convertor or not os.path.isfile(convertor):
         logger.error('Convertor application must be given and exist.')
         return None
 
     job = cfg.get('job', None)
-    if not job or not isfile(job):
+    if not job or not os.path.isfile(job):
         logger.error('Job file must be given and exist.')
         return None
 
     tiff = cfg.get('tiff', None)
-    if not tiff or not isdir(tiff):
+    if not tiff or not os.path.isdir(tiff):
         logger.error('TIFF directory must be given and exist.')
         return None
 
