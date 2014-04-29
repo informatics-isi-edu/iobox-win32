@@ -229,7 +229,7 @@ class ErmrestClient (object):
                     tiff = self.convert(observer, file_from, slide_id, sha256sum)
                     if not tiff:
                         return (None, None, None)
-                    files = [(file_from, file_to), (tiff, '/tiff/%s' % slide_id)]
+                    files = [(file_from, file_to), (tiff, '/tiff/%s/%s' % (slide_id, sha256sum))]
                     task_id, status = self.transfer(files, sleep_time, slide_id, sha256sum)
                     ret = (task_id, status, 'transfer')
                 except:
