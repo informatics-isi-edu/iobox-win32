@@ -75,13 +75,22 @@ The following is a sample of the configuration file:
     "inbox": "C:\\Users\\your_user_id\\Documents\\scans\\inbox",
     "outbox": "C:\\Users\\your_user_id\\Documents\\scans\\outbox",
     "rejected": "C:\\Users\\your_user_id\\Documents\\scans\\rejected",
+    "retry": "C:\\Users\\your_user_id\\Documents\\scans\\retry",
+    "transfer": "C:\\Users\\your_user_id\\Documents\\scans\\transfer",
+    "convertor": "C:\\Users\\your_user_id\\Documents\\scans\\convertor\\CZItoTIFFConverterConsole.exe",
+    "tiff": "C:\\Users\\your_user_id\\Documents\\scans\\tiff",
     "log": "C:\\Users\\your_user_id\\Documents\\scans\\log\\cirm_iobox.log",
+    "job": "C:\\Users\\your_user_id\\Documents\\scans\\config\\job.xml",
     "loglevel": "debug",
     "username": "your_user_id",
     "password": "your_password",
-    "pattern": "http-*[^-]+[-](?P<slideid>.*)[.]czi",
+    "pattern": ".*id=(?P<slideid>.*[-][0-9]*)[.]czi",
     "endpoint_1": "your_user_id#IPC-XPS-89",
-    "endpoint_2": "isidev#cirm-files"
+    "endpoint_2": "isidev#cirm-files",
+    "timeout": 30,
+    "mail_server": "smtp.isi.edu",
+    "mail_sender": "CIRM Online Notification <no_reply@isi.edu>",
+    "mail_receiver": "serban@isi.edu"
 }
 
 The required parameters are:
@@ -91,10 +100,15 @@ The required parameters are:
 	- inbox: the directory the service is watching for new files
 	- outbox: the directory the service is moving the files in case of success
 	- rejected: the directory the service is moving the files in case of failure
+	- retry: the directory the service is moving the files in case of database failure
+	- transfer: the directory the service is moving the files in case of Globus transfer failure
+	- convertor: the utility of converting czi file to a tiff file
+	- tiff: the directory the convertor is creating the tiff files
+	- job: the XML file used by the czi-tiff converter
 	- username: the GO username
 	- password: the GO password
 	- pattern: the pattern used in matching the file names. 
-		For example, a valid name will be "http---cirm.7.purl.org-20131110-wnt1creZEGG-RES-0-06-000.czi".
+		For example, a valid name will be "http---cirm.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi".
 	- endpoint_1: the Windows GO endpoint name.
 	- endpoint_2: the storage GO endpoint name.
 	
@@ -104,6 +118,10 @@ The optional parameters are:
 	- bulk_ops_max: the maximum number of bulk operations. The default value is 1000.
 	- log: the service log file
 	- loglevel: the log level. Valid values are: "error", "warning", "info" and "debug".
+	- timeout: the waiting time in minutes before a retry process will occur.
+	- mail_server: the mail server used to send status notifications.
+	- mail_sender: the sender of the mail notifications.
+	- mail_receiver: the receiver of the mail notifications.
 	
 Troubleshooting
 ~~~~~~~~~~~~~~~
