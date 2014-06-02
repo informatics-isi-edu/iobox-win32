@@ -93,9 +93,10 @@ def moveFile(observer, filename, action):
     
     if os.path.isfile('%s%s%s' % (toDir, os.sep, os.path.basename(filename))):
         os.remove('%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
-    serviceconfig.logger.info('Rejected file: %s' % os.path.basename(filename))
+    serviceconfig.logger.info('Moved file: %s' % os.path.basename(filename))
     os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
-    observer.client.sendMail('FAILURE %s' % os.path.basename(filename), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
+    if action != 'rejected':
+        observer.client.sendMail('FAILURE %s' % os.path.basename(filename), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
 
 def processRetry(observer):
     try:
