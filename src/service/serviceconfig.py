@@ -160,6 +160,7 @@ def load():
     mail_sender = cfg.get('mail_sender', None)
     mail_receiver = cfg.get('mail_receiver', None)
     timeout = cfg.get('timeout', 30)
+    globus_timeout = cfg.get('globus_timeout', 10)
 
     # Establish Ermrest client connection
     try:
@@ -170,7 +171,8 @@ def load():
                                endpoint_2=endpoint_2, \
                                mail_server=mail_server, \
                                mail_sender=mail_sender, \
-                               mail_receiver=mail_receiver,
+                               mail_receiver=mail_receiver, \
+                               globus_timeout=globus_timeout, \
                                use_goauth=goauthtoken)
         client.connect()
     except MalformedURL as err:

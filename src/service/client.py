@@ -141,6 +141,7 @@ class ErmrestClient (object):
         self.mail_server = kwargs.get("mail_server")
         self.mail_sender = kwargs.get("mail_sender")
         self.mail_receiver = kwargs.get("mail_receiver")
+        self.globus_timeout = kwargs.get("globus_timeout")
         self.header = None
         self.webconn = None
 
@@ -317,8 +318,8 @@ class ErmrestClient (object):
             code, reason, data = api.endpoint(self.endpoint_2)
             
             # activate endpoint
-            code, reason, result = api.endpoint_autoactivate(self.endpoint_1, if_expires_in=600)
-            code, reason, result = api.endpoint_autoactivate(self.endpoint_2, if_expires_in=600)
+            code, reason, result = api.endpoint_autoactivate(self.endpoint_1, if_expires_in=self.globus_timeout*60)
+            code, reason, result = api.endpoint_autoactivate(self.endpoint_2, if_expires_in=self.globus_timeout*60)
             
             # look at contents of endpoint
             code, reason, data = api.endpoint_ls(self.endpoint_1, '/')
@@ -326,7 +327,7 @@ class ErmrestClient (object):
             
             # start transfer
             code, message, data = api.transfer_submission_id()
-            t = api_client.Transfer(data['value'], self.endpoint_1, self.endpoint_2, deadline=datetime.utcnow() + timedelta(minutes=10), label=label)
+            t = api_client.Transfer(data['value'], self.endpoint_1, self.endpoint_2, deadline=datetime.utcnow() + timedelta(minutes=self.globus_timeout), label=label)
             for file_from, file_to in files:
                 if os.path.isfile(file_from):
                     t.add_item(create_uri_friendly_file_path(file_from), file_to)
