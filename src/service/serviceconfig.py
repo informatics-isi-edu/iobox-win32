@@ -83,13 +83,7 @@ def load():
         logger.error('Ermrest URL must be given.')
         return None
     
-    http_url = cfg.get('http_url', None)
-    if not http_url:
-        logger.error('Scan HTTP URL ROOT must be given.')
-        return None
-    
     goauthtoken = cfg.get('goauthtoken', None)
-    bulk_ops_max = int(cfg.get('bulk_ops_max', __BULK_OPS_MAX))
     
     inbox = cfg.get('inbox', None)
     if not inbox or not os.path.isdir(inbox):
@@ -116,19 +110,19 @@ def load():
         logger.error('Transfer directory must be given and exist.')
         return None
 
-    convertor = cfg.get('convertor', None)
-    if not convertor or not os.path.isfile(convertor):
-        logger.error('Convertor application must be given and exist.')
+    hatrac = cfg.get('hatrac', None)
+    if not hatrac:
+        logger.error('hatrac URL must be given.')
         return None
 
-    job = cfg.get('job', None)
-    if not job or not os.path.isfile(job):
-        logger.error('Job file must be given and exist.')
+    namespace = cfg.get('namespace', None)
+    if not namespace:
+        logger.error('CIRM namespace must be given.')
         return None
 
-    tiff = cfg.get('tiff', None)
-    if not tiff or not os.path.isdir(tiff):
-        logger.error('TIFF directory must be given and exist.')
+    cookie = cfg.get('cookie', None)
+    if not cookie:
+        logger.error('CIRM cookie must be provided.')
         return None
 
     username = cfg.get('username', None)
@@ -146,33 +140,24 @@ def load():
         logger.error('Filename pattern must be given.')
         return None
 
-    endpoint_1 = cfg.get('endpoint_1', None)
-    if not endpoint_1:
-        logger.error('Source endpoint must be given.')
-        return None
-
-    endpoint_2 = cfg.get('endpoint_2', None)
-    if not endpoint_2:
-        logger.error('Destination endpoint must be given.')
-        return None
-
     mail_server = cfg.get('mail_server', None)
     mail_sender = cfg.get('mail_sender', None)
     mail_receiver = cfg.get('mail_receiver', None)
     timeout = cfg.get('timeout', 30)
-    globus_timeout = cfg.get('globus_timeout', 10)
+    chunk_size = cfg.get('chunk_size', 100000000)
 
     # Establish Ermrest client connection
     try:
         client = ErmrestClient(baseuri=url, \
                                username=username, \
                                password=password, \
-                               endpoint_1=endpoint_1, \
-                               endpoint_2=endpoint_2, \
+                               hatrac=hatrac, \
+                               namespace=namespace, \
+                               cookie=cookie, \
+                               chunk_size=chunk_size, \
                                mail_server=mail_server, \
                                mail_sender=mail_sender, \
                                mail_receiver=mail_receiver, \
-                               globus_timeout=globus_timeout, \
                                use_goauth=goauthtoken)
         client.connect()
     except MalformedURL as err:
@@ -199,12 +184,7 @@ def load():
                               rejected=rejected, \
                               retry=retry, \
                               transfer=transfer, \
-                              convertor=convertor, \
-                              tiff=tiff, \
-                              job=job, \
                               pattern=pattern, \
-                              bulk_ops_max=bulk_ops_max, \
-                              http_url=http_url, \
                               timeout=timeout, \
                               client=client)
 

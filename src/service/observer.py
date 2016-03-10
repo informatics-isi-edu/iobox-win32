@@ -31,13 +31,8 @@ class CirmObserver(object):
         self.rejected = kwargs.get("rejected")
         self.retry = kwargs.get("retry")
         self.transfer = kwargs.get("transfer")
-        self.convertor = kwargs.get("convertor")
-        self.tiff = kwargs.get("tiff")
-        self.job = kwargs.get("job")
         self.pattern = kwargs.get("pattern")
         self.client = kwargs.get("client")
-        self.bulk_ops_max = kwargs.get("bulk_ops_max")
-        self.http_url = kwargs.get("http_url")
         processRetry(self)
         recoverFiles(self)
         self.hDir = win32file.CreateFile (

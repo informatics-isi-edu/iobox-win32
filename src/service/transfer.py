@@ -45,25 +45,20 @@ def processFile(observer, filename, action):
         moveFile(observer, filename, 'rejected')
     else:
         st_size = os.stat(filename).st_size
-        sleep_time = st_size / 1000000000 +1
         slide_id = m.group('slideid')
         shasum = sha256sum(filename)
-        fileobjs = []
-        obj = {'slide_id': slide_id, 
+        fileobj = {'slide_id': slide_id, 
                'filename': os.path.basename(filename),
                'sha256sum': shasum,
-               'file_from': filename,
-               'file_to': '/scans/%s/%s.czi' % (slide_id, shasum)}
-        fileobjs.append(obj)
+               'file_from': filename}
         serviceconfig.logger.info('Registering file: %s' % os.path.basename(filename))
-        task_id, status, lastAction = observer.client.add_subjects(observer, fileobjs, observer.http_url, st_size, observer.bulk_ops_max, action, sleep_time)
-        if task_id and status == 'SUCCEEDED':
-            serviceconfig.logger.info('Transfer %s: %s' % (filename, task_id))
-            observer.client.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using the Globus Task ID %s' % (filename, task_id))
+        job_id, status, lastAction = observer.client.add_subjects(observer, fileobj, st_size, action)
+        if job_id and status == 'SUCCEEDED':
+            serviceconfig.logger.info('Transfer %s: %s' % (filename, job_id))
+            observer.client.sendMail('SUCCEEDED Transfer', 'The file "%s" was successfully transfered using hatrac Job ID %s' % (filename, job_id))
             if os.path.isfile('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename))):
                 os.remove('%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
             os.rename(filename, '%s%s%s' % (observer.outbox, os.sep, os.path.basename(filename)))
-            shutil.rmtree('%s%s%s' % (observer.tiff, os.sep, shasum))
         elif lastAction != None and lastAction != action:
                 moveFile(observer, filename, lastAction)
 
@@ -93,7 +88,7 @@ def moveFile(observer, filename, action):
     
     if os.path.isfile('%s%s%s' % (toDir, os.sep, os.path.basename(filename))):
         os.remove('%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
-    serviceconfig.logger.info('Moved file: %s' % os.path.basename(filename))
+    serviceconfig.logger.info('Moved file: "%s" to the "%s" directory.' % (os.path.basename(filename), toDir))
     os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
     if action != 'rejected':
         observer.client.sendMail('FAILURE %s' % os.path.basename(filename), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
@@ -138,7 +133,7 @@ def fileIsReady(observer, filename):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got WindowsError on checking if the file "%s" is ready for procesing.' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            #observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return None
     except IOError,e:
         if e.errno == errno.EACCES:
@@ -147,12 +142,12 @@ def fileIsReady(observer, filename):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return None
     except:
         et, ev, tb = sys.exc_info()
         serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-        observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+        observer.client.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         return None
     
