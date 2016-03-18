@@ -48,7 +48,7 @@ IObox (win32) is a Python based utility. It is implemented on Windows as a servi
 
 IObox (win32) will look for the configuration file at:
 
-```%HOMEPATH%\Documents\scans\config\outbox.conf```
+`%HOMEPATH%\Documents\scans\config\outbox.conf`
 
 The following is a sample of the configuration file:
 
