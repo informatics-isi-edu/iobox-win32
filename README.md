@@ -1,48 +1,46 @@
 # IObox (win32)
 
-IObox (win32) is a client-side utility uploading and registering files to ERMrest+Hatrac services.
+IObox (win32) is a client-side utility for uploading and registering files to ERMrest+Hatrac services.
 
 ## System Requirements
 
-IObox (win32) is a Python based utility. It is implemented on Windows as a service. The following are the prerequisites:
+IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a service. The following are the prerequisites:
 
-1. Python version 2.7+.
-1. pywin32, Mark Hammond's add-on that includes the Win32 API, COM support, and Pythonwin extensions. It's available from the pywin32 project on SourceForge.
-1. setuptools Python Package. For Windows 7, download ez_setup.py using your favorite web browser or other technique and "run" that file.
-1. py2exe from SourceForge.
+1. **Python** version 2.7+.
+1. **pywin32**, Mark Hammond's add-on that includes the Win32 API, COM support, and Pythonwin extensions. It's available from the pywin32 project on SourceForge.
+1. **setuptools** Python Package. For Windows 7, download ez_setup.py using your favorite web browser or other technique and **run** that file.
+1. **py2exe** from SourceForge.
 
 
 ## Installation
 
-1. Check out the code from SVN from the following location
+1. Check out the code from GitHub:
 
-  https://svn2.misd.isi.edu/repos/tagfiler/win32damsel/trunk.
+    git clone https://github.com/informatics-isi-edu/iobox-win32.git 
 
-2. cd into the "src\service" directory.
+1. Go into the **src\service** directory.
 
-3. Run:
+1. Run:
 
-  ```python setup.py py2exe```
+    python setup.py py2exe
 
-  Two directories will be created: "build" and "dist". Remove the "build" directory.
+  Two directories will be created: **build** and **dist**. Remove the **build** directory.
 
-4. Open a 'Command Prompt' window in 'Run as Administrator' mode.
+1. Open a **Command Prompt** window in **Run as Administrator** mode.
    
-5. cd into the "src\service\dist" directory.  
+1. Go into the **src\service\dist** directory.  
    
-6. Install the service by running:
+1. Install the service by running:
    
-  ```CirmObserverService.exe -install```
+    CirmObserverService.exe -install
 
-7. In the "Services" console, you will find the service named "CIRMIOBox".
+1. In the **Services** Windows console, you will find the service named **IOBox**.
 
-8. Right click the service and select "Properties". Select the "Log On" tab.
-
-  Check the "This account" box. Enter the user and the password for running this service. The setting is necessary because the service needs permission to write in the application log file. Select the "General" tab. Select "Automatic" for the "Startup type". The service will start automatically after reboot.
+1. Right click the service and select **Properties**. Select the **Log On** tab. Check the **This account** box. Enter the user and the password for running this service. The setting is necessary because the service needs permission to write in the application log file. Select the **General** tab. Select **Automatic** for the **Startup type**. The service will start automatically after reboot.
      
-9. To uninstall the service, while the service is stopped, from the "src\service\dist", run:
+1. To uninstall the service, while the service is stopped, from the **src\service\dist** directory, run:
 
-  ```CirmObserverService.exe -remove```
+    CirmObserverService.exe -remove
 
 ## Configuration
 
