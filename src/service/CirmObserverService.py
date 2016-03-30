@@ -1,3 +1,19 @@
+# 
+# Copyright 2016 University of Southern California
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#    http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import win32serviceutil
 import win32service
 import win32event
@@ -6,9 +22,9 @@ import serviceconfig
 
 
 class CirmObserverService(win32serviceutil.ServiceFramework):
-    _svc_name_ = 'CIRMIOBox'
-    _svc_display_name_ = 'CIRM IOBox'
-    _svc_description_ = 'CIRM service for registering files'
+    _svc_name_ = 'IOBox'
+    _svc_display_name_ = 'IOBox'
+    _svc_description_ = 'IOBox service for registering files'
 
     
     def __init__(self, args):
@@ -20,15 +36,15 @@ class CirmObserverService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         servicemanager.LogInfoMsg("stopping...")
-        if self.observer:
-            self.observer.stop()
+        if self.observerManager:
+            self.observerManager.stop()
         self.isAlive = False
 
         
     def SvcDoRun(self):
         servicemanager.LogInfoMsg("starting...")
-        self.observer = serviceconfig.load()
-        if self.observer:
-            self.observer.start()
+        self.observerManager = serviceconfig.load()
+        if self.observerManager:
+            self.observerManager.start()
             win32event.SetEvent(self.hWaitStop)
 
