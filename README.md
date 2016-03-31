@@ -61,16 +61,16 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
    - The handler returns new metadata that is incorporated into the
      accumulation passed to subsequent handlers.  The accumulation
      will optional prefix metadata field names based on the presence
-     of a **prefix** key in the rule block.
-1. We provide some basic metadata like **basename**, **nbytes**, 
-   **sha256**, **patterngroups**, **urlQuote**, etc. 
+     of a `prefix` key in the rule block.
+1. We provide some basic metadata like `basename, nbytes, 
+   sha256, patterngroups, urlQuote`, etc. 
    at the start of the disposition sequence.
 1. Each disposition block performs work and outputs some more
    metadata.  **ermrest** and **hatrac** handlers should output useful info
    like the resulting table row (including server-generated default
    column values) or object version.
 1. Output metadata are optional qualified with a **prefix** of that block.
-   It is the user responsibility to define a **prefix** wherever 
+   It is the user responsibility to define a `prefix` wherever 
    collisions might occur. A block can reference metadata from
    any previous block in its document. This is important so a single
    handler can be invoked more than once and its outputs
@@ -98,13 +98,13 @@ IObox (win32) will look for the configuration file at `%HOMEPATH%\Documents\iobo
 
 Below is a sample of an configuration file. It:
 
-1. Identifies a **slideid** from the file name.
-1. Generates the **sha256** of the file.
+1. Identifies a `slideid` from the file name.
+1. Generates the `sha256` of the file.
 1. Encodes URL values that will be used in the URL.
 1. Defines Web Connections that will be used by **ermrest** and **hatrac**.
-1. Creates an entry with the **Original Filename** and the **File Size**.
+1. Creates an entry with the `Original Filename` and the `File Size`.
 1. Uploads in **hatrac** the file.
-1. Updates the entry with the **Filename** as its **sha256**.
+1. Updates the entry with the `Filename` as its `sha256`.
 
 ```
 {
@@ -206,7 +206,7 @@ The sample is using the following:
 1. Global parameters:
 
    - **log**: the service log file.
-   - **loglevel**: the log level. Valid values are: **error**, **warning**, **info** and **debug**.
+   - **loglevel**: the log level. Valid values are: `error, warning, info and debug`.
    - **timeout**: the waiting time in minutes before a retry process will occur.
    - **mail_server**: the mail server used to send status notifications.
    - **mail_sender**: the sender of the mail notifications.
@@ -224,10 +224,10 @@ The sample is using the following:
 
    - **pattern**: the pattern used in matching the file names. 
      For example, a valid name will be `http---cirm.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi`.
-   - **"handler": "patterngroups"**: identifies the **slideid** from the file name 
+   - **"handler": "patterngroups"**: identifies the `slideid` from the file name 
      (in our example `20131110-wnt1creZEGG-RES-0-06-000`). The Python dictionary is
      updated with the key `slideid`.
-   - **"handler": "sha256"**: generates the **sha256** of the file. The Python dictionary is
+   - **"handler": "sha256"**: generates the `sha256` of the file. The Python dictionary is
      updated with the key `sha256`.
    - **"handler": "urlQuote"**: encodes URL the values specified by the `resources`.
      The Python dictionary is updated with the keys `encode.slideid, 
@@ -235,14 +235,14 @@ The sample is using the following:
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
    - **"handler": "webconn"**: defines the Web connection to be used by **ermrest** and
-     **hatrac**. The Python dictionary is updated with the key `foo`*.
+     **hatrac**. The Python dictionary is updated with the key `foo`.
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
      specifies the columns that will be updated.
-   - **"handler": "hatrac"**: Upload the files in chunks and create the
+   - **"handler": "hatrac"**: Uploads the file in chunks and create the
      parent namespaces if absent. In case of failure, move the file to
      the `transfer` directory.
    - **"handler": "ermrest"** with `"method": "PUT"`. The `group_key`
-     specifies the columns to identify the entity the that will be updated.
+     specifies the columns to identify the entity that will be updated.
      The `target_columns` specifies the columns that will be updated.
 
 ## Troubleshooting
