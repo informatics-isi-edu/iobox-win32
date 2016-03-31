@@ -52,16 +52,16 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
    i.e. only one rule block is executed per file.
 1. In rule block, process an ordered list of work units, each of which
    reference a built-in handler by keyword.
-- The build-in handler is passed the filename, an accumulation of
-  metadata, and the work unit document (JSON) where it might find
-  handler-specific configuration data.
-- The handler may interact with outside word and can raise
-  exceptions for fatal conditions.  An exception aborts the work
-  sequence, skipping subsequent work units for the same file.
-- The handler returns new metadata that is incorporated into the
-  accumulation passed to subsequent handlers.  The accumulation
-  will prefix metadata field names from each handler invocation
-  with its ordinal position in the rule block.
+   - The build-in handler is passed the filename, an accumulation of
+     metadata, and the work unit document (JSON) where it might find
+     handler-specific configuration data.
+   - The handler may interact with outside word and can raise
+     exceptions for fatal conditions.  An exception aborts the work
+     sequence, skipping subsequent work units for the same file.
+   - The handler returns new metadata that is incorporated into the
+     accumulation passed to subsequent handlers.  The accumulation
+     will prefix metadata field names from each handler invocation
+     with its ordinal position in the rule block.
 1. We provide some basic metadata like **basename**, **nbytes**, 
    **sha256**, **patterngroups**, **urlQuote**, etc. 
    at the start of the disposition sequence.
