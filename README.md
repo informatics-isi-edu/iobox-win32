@@ -16,13 +16,13 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
 
 1. Check out the code from GitHub:
 
-    git clone https://github.com/informatics-isi-edu/iobox-win32.git 
+    ```git clone https://github.com/informatics-isi-edu/iobox-win32.git``` 
 
 1. Go into the **src\service** directory.
 
 1. Run:
 
-    python setup.py py2exe
+    ```python setup.py py2exe```
 
   Two directories will be created: **build** and **dist**. Remove the **build** directory.
 
@@ -32,7 +32,7 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
    
 1. Install the service by running:
    
-    CirmObserverService.exe -install
+    ```CirmObserverService.exe -install```
 
 1. In the **Services** Windows console, you will find the service named **IOBox**.
 
@@ -40,7 +40,7 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
      
 1. To uninstall the service, while the service is stopped, from the **src\service\dist** directory, run:
 
-    CirmObserverService.exe -remove
+    ```CirmObserverService.exe -remove```
 
 ## Configuration
 
