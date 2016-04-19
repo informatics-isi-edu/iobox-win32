@@ -68,7 +68,7 @@ class Workflow(object):
         if self.rule:
             self.applyDisposition(action)
         else:
-            self.moveFile(filename, 'rejected')
+            self.moveFile(filename, 'failure')
     
     """
     Find the rule for uploading a file.
@@ -328,8 +328,8 @@ class Workflow(object):
             subject = 'SUCCESS'
         else:
             subject = 'FAILURE'
-        if action == 'rejected' or action == None:
-            toDir = self.rejected
+        if action == 'failure' or action == None:
+            toDir = self.failure
         elif action == 'retry':
             toDir = self.retry
         elif action == 'transfer':
