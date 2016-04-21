@@ -90,7 +90,10 @@ class ObserverManager(object):
             timer = Timer(1, watcher.start, kwargs={})
             self.timer.append(timer)
             timer.start()
-    
+            
+        for timer in self.timer:
+            timer.join()
+
     """
     Stop the observers.
     """

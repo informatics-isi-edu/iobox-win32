@@ -6,7 +6,7 @@ IObox (win32) is a client-side utility for uploading and registering files to ER
 
 IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a service. The following are the prerequisites:
 
-1. **Python** version 2.7+.
+1. **Python** version 2.7+. Update the system PATH variable with the path to the directory containing the python exe, e.g., C:\Python27.
 1. **pywin32**, Mark Hammond's add-on that includes the Win32 API, COM support, and Pythonwin extensions. It's available from the pywin32 project on SourceForge.
 1. **setuptools** Python Package. For Windows 7, download ez_setup.py using your favorite web browser or other technique and **run** that file.
 1. **py2exe** from SourceForge.
@@ -32,7 +32,7 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
    
 1. Install the service by running:
    
-    ```CirmObserverService.exe -install```
+    ```IOBoxObserverService.exe -install```
 
 1. In the **Services** Windows console, you will find the service named **IOBox**.
 
@@ -40,7 +40,7 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
      
 1. To uninstall the service, while the service is stopped, from the **src\service\dist** directory, run:
 
-    ```CirmObserverService.exe -remove```
+    ```IOBoxObserverService.exe -remove```
 
 ## Configuration
 
