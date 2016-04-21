@@ -3,9 +3,9 @@ import py2exe
 
 
 setup(
-    name = 'CIRM IOBox',
-    description = 'CIRM service for registering files',
+    name = 'IOBox',
+    description = 'IOBox service for registering files',
     version = '1.00.00',
-    service = ['CirmObserverService'],
+    service = ['IOBoxObserverService'],
     zipfile=None,
 )

@@ -21,7 +21,7 @@ import servicemanager
 import serviceconfig
 
 
-class CirmObserverService(win32serviceutil.ServiceFramework):
+class IOBoxObserverService(win32serviceutil.ServiceFramework):
     _svc_name_ = 'IOBox'
     _svc_display_name_ = 'IOBox'
     _svc_description_ = 'IOBox service for registering files'
