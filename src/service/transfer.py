@@ -166,7 +166,10 @@ class Workflow(object):
                     colmap = disposition.get('colmap', {})
                     cols = dict()
                     for col in colmap.keys():
-                        value = colmap[col] % ouputDict
+                        try:
+                            value = colmap[col] % ouputDict
+                        except:
+                            value = colmap[col]
                         cols.update({col: value})
                     body.append(cols)
                     serviceconfig.logger.debug("POST body: %s" % json.dumps(body))
