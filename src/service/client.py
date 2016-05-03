@@ -322,14 +322,14 @@ class ErmrestClient (object):
                 position = index
                 body = f.read(chunk_size)
                 url = '%s;upload/%s/%d' % (object_url, job_id, position)
-                headers = {'Content-Type': 'application/octet-stream', 'Content-Length': chunk_size}
+                headers = {'Content-Type': 'application/octet-stream', 'Content-Length': '%d' % chunk_size}
                 resp = self.send_request('PUT', url, body=body, headers=headers, sendData=True)
                 res = resp.read()
             if last_chunk_size > 0:
                 position = chunk_no
                 body = f.read(chunk_size)
                 url = '%s;upload/%s/%d' % (object_url, job_id, position)
-                headers = {'Content-Type': 'application/octet-stream', 'Content-Length': last_chunk_size}
+                headers = {'Content-Type': 'application/octet-stream', 'Content-Length': '%d' % last_chunk_size}
                 resp = self.send_request('PUT', url, body=body, headers=headers, sendData=True)
                 res = resp.read()
             f.close()
