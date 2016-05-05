@@ -1,0 +1,2 @@
+Tag: gpcr-20160503.1 - IObox release for GPCR Data Explorer that supports ingesting fcs files with name in followng format format <site>...<date>_[...].fcs
+Tag: gpcr-20160505.1 - No restrictsion of fcs name, except should end in .fcs
