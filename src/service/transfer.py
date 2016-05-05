@@ -68,6 +68,7 @@ class Workflow(object):
         if self.rule:
             self.applyDisposition(action)
         else:
+            serviceconfig.logger.error('No rule found for file %s' % filename)
             self.moveFile(filename, 'failure')
     
     """
@@ -79,7 +80,7 @@ class Workflow(object):
             pattern = rule.get('pattern', None)
             if pattern:
                 groups = self.basicDict['patterngroups'](pattern, filename, '')
-                if groups:
+                if groups != None:
                     self.rule = rule
                     self.filename = filename
                     serviceconfig.logger.debug('rule: "%s"' % pattern)
@@ -300,7 +301,7 @@ class Workflow(object):
             os.rename(lockFile, filename)
             return True
         except WindowsError, e:
-            if e.winerror == winerror.ERROR_SHARING_VIOLATION:
+            if e.winerror == winerror.ERROR_SHARING_VIOLATION or e.winerror == winerror.ERROR_FILE_NOT_FOUND:
                 return False
             else:
                 et, ev, tb = sys.exc_info()
