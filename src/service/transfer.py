@@ -141,6 +141,31 @@ class Workflow(object):
                     webcli = self.clients.get('%s%s' % (prefix, key), None)
                     if webcli == None:
                         connection = connections[key]
+                        credentials = connection.get('credentials', None)
+                        if credentials == None:
+                            complete = False
+                            serviceconfig.logger.debug("Credentials file was not specified.")
+                            serviceconfig.sendMail('FAILURE', 'Credentials file was not specified.')
+                            self.moveFile(self.filename, 'failure')
+                            break
+                        try:
+                            if os.path.exists(credentials) and os.path.isfile(credentials):
+                                f = open(credentials, 'r')
+                                cfg = json.load(f)
+                                for credential in cfg.keys():
+                                    connection.update({'%s' % credential: cfg.get(credential)})
+                            else:
+                                complete = False
+                                serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
+                                serviceconfig.sendMail('FAILURE', 'Bad credentials file "%s".' % credentials)
+                                self.moveFile(self.filename, 'failure')
+                        except:
+                            complete = False
+                            et, ev, tb = sys.exc_info()
+                            serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                            serviceconfig.sendMail('FAILURE', 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                            self.moveFile(self.filename, 'failure')
+                            break
                         webcli = ErmrestClient(scheme=connection.get('scheme', None), \
                                                host=connection.get("host", None), \
                                                port=connection.get("port", None), \
@@ -151,6 +176,8 @@ class Workflow(object):
                         webcli.connect()
                         self.clients.update({'%s%s' % (prefix, key): webcli})
                     ouputDict.update({'%s%s' % (prefix, key): webcli})
+                if complete == False:
+                    break
             elif disposition['handler'] == 'ermrest':
                 """
                 Execute an ermrest request.
