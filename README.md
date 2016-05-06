@@ -154,9 +154,7 @@ Below is a sample of an configuration file. It:
 									"scheme": "https",
 									"host": "foo.org",
 									"use_goauth": true,
-									"username": "my_user_name",
-									"password": "my_password",
-									"cookie": "ermrest=..."
+									"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
 								}
 							}
 						},
@@ -201,6 +199,17 @@ Below is a sample of an configuration file. It:
 
 ```
 
+Example of a credentials file:
+
+```
+{
+	"username": "my_user_name",
+	"password": "my_password",
+	"cookie": "ermrest=..."
+}
+
+```
+
 The sample is using the following:
 
 1. Global parameters:
@@ -235,7 +244,8 @@ The sample is using the following:
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
    - **"handler": "webconn"**: defines the Web connection to be used by **ermrest** and
-     **hatrac**. The Python dictionary is updated with the key `foo`.
+     **hatrac**. The parameter **credentials** points to a JSON file that contains 
+     the  credential information. The Python dictionary is updated with the key `foo`. 
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
      specifies the columns that will be updated.
    - **"handler": "hatrac"**: Uploads the file in chunks and create the
