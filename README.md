@@ -63,12 +63,14 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
      will optional prefix metadata field names based on the presence
      of a `prefix` key in the rule block.
 1. We provide some basic metadata like `basename, nbytes, 
-   sha256, patterngroups, urlQuote`, etc. 
+   sha256, md5sum, patterngroups, urlQuote`, etc. 
    at the start of the disposition sequence.
 1. Each disposition block performs work and outputs some more
    metadata.  **ermrest** and **hatrac** handlers should output useful info
    like the resulting table row (including server-generated default
    column values) or object version.
+1. In the **hatrac** handlers, if the md5sum of the file to be uploaded 
+   matches the one existing in **hatrac**, then the upload process is skipped.
 1. Output metadata are optional qualified with a **prefix** of that block.
    It is the user responsibility to define a `prefix` wherever 
    collisions might occur. A block can reference metadata from
