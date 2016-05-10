@@ -104,6 +104,7 @@ class ErmrestClient (object):
     ## Derived from the ermrest iobox service client
 
     def __init__(self, **kwargs):
+        self.basicDict = kwargs.get('basicDict', None)
         self.scheme = kwargs.get('scheme', None)
         self.host = kwargs.get("host", None)
         self.port = kwargs.get("port", None)
@@ -287,11 +288,29 @@ class ErmrestClient (object):
             raise
 
     """
+    Get the md5sum file from hatrac.
+    """
+    def get_md5sum(self, url):
+        """
+            Retrieve the md5sum of a file
+        """
+        ret = None
+        if url != None:
+            headers = {'Accept': '*'}
+            try:
+                resp = self.send_request('HEAD', url, headers=headers)
+                resp.read()
+                ret = resp.getheader('content-md5', None)
+            except:
+                pass
+        return ret
+                
+    """
     Create a job for uploading a file.
     """
     def createUploadJob(self, object_url, filePath, chunk_size):
         try:
-            hash_value = self.md5sum(filePath, chunk_size)
+            hash_value = self.basicDict['md5sum'](filePath, chunk_size)
             file_size = os.path.getsize(filePath)
             url = '%s;upload' % object_url
             headers = {'Content-Type': 'application/json'}
@@ -372,21 +391,3 @@ class ErmrestClient (object):
             serviceconfig.logger.error('Can not cancel job "%s" for object "%s". Error: "%s"' % (job_id, object_url, str(ev)))
             raise
             
-    """
-    Return base64 digest string like md5 utility would compute.
-    """
-    def md5sum(self, fpath, chunk_size):
-        h = hashlib.md5()
-        try:
-            f = open(fpath, 'rb')
-            try:
-                b = f.read(chunk_size)
-                while b:
-                    h.update(b)
-                    b = f.read(chunk_size)
-                return base64.b64encode(h.digest())
-            finally:
-                f.close()
-        except:
-            return None
-

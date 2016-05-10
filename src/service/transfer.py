@@ -112,6 +112,14 @@ class Workflow(object):
                 prefix = disposition.get('prefix', '') % ouputDict
                 sha256 = self.basicDict['sha256sum'](self.filename)
                 ouputDict.update({'%ssha256' % prefix: sha256})
+            elif disposition['handler'] == 'md5sum':
+                """
+                Add the base64 digest string of the file computed with the md5 utility.
+                """
+                chunk_size = disposition.get('chunk_size', 100000000)
+                prefix = disposition.get('prefix', '') % ouputDict
+                md5sum = self.basicDict['md5sum'](self.filename, chunk_size)
+                ouputDict.update({'%smd5sum' % prefix: md5sum})
             elif disposition['handler'] == 'urlQuote':
                 """
                 Add the URL encode values.
@@ -172,7 +180,8 @@ class Workflow(object):
                                                use_goauth=connection.get("use_goauth", False), \
                                                username=connection.get("username", None), \
                                                password=connection.get("password", None), \
-                                               cookie=connection.get("cookie", None))
+                                               cookie=connection.get("cookie", None), \
+                                               basicDict=self.basicDict)
                         webcli.connect()
                         self.clients.update({'%s%s' % (prefix, key): webcli})
                     ouputDict.update({'%s%s' % (prefix, key): webcli})
@@ -259,12 +268,16 @@ class Workflow(object):
                 Upload the file.
                 """
                 url = disposition.get('url', None) % ouputDict
-                chunk_size = disposition.get('chunk_size', 100000000)
-                webcli = ouputDict[disposition.get('webconn', None) % ouputDict]
-                failure = disposition.get('failure', None)
-                create_parents = disposition.get('create_parents', False)
                 o = urlparse.urlparse(url)
                 object_url = o.path
+                chunk_size = disposition.get('chunk_size', 100000000)
+                webcli = ouputDict[disposition.get('webconn', None) % ouputDict]
+                if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
+                    serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
+                    continue
+                
+                failure = disposition.get('failure', None)
+                create_parents = disposition.get('create_parents', False)
                 pathes = o.path.split('/')[:-1]
                 namespaces = pathes[2:]
                 res = webcli.retrieveNamespace('/'.join(pathes))

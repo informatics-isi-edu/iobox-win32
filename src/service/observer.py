@@ -27,6 +27,7 @@ import re
 import urlparse
 import hashlib
 import time
+import base64
 from transfer import Workflow
 
 import serviceconfig
@@ -57,6 +58,7 @@ class ObserverManager(object):
         self.basicDict.update({'basename': os.path.basename})
         self.basicDict.update({'nbytes': self.nbytes})
         self.basicDict.update({'sha256sum': self.sha256sum})
+        self.basicDict.update({'md5sum': self.md5sum})
         self.basicDict.update({'patterngroups': self.patterngroups})
         self.basicDict.update({'urlQuote': urllib.quote})
         self.basicDict.update({'urlPath': self.urlPath})
@@ -147,6 +149,24 @@ class ObserverManager(object):
                     h.update(b)
                     b = f.read(4096)
                 return h.hexdigest()
+            finally:
+                f.close()
+        except:
+            return None
+
+    """
+    Get the base64 digest string like md5 utility would compute.
+    """
+    def md5sum(self, fpath, chunk_size):
+        h = hashlib.md5()
+        try:
+            f = open(fpath, 'rb')
+            try:
+                b = f.read(chunk_size)
+                while b:
+                    h.update(b)
+                    b = f.read(chunk_size)
+                return base64.b64encode(h.digest())
             finally:
                 f.close()
         except:
