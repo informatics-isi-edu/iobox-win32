@@ -134,11 +134,15 @@ Below is a sample of an configuration file. It:
 							"handler": "sha256"
 						},
 						{
+							"handler": "md5sum"
+						},
+						{
 							"handler": "urlQuote",
 							"prefix": "encode.",
 							"resources": {
 								"slideid": "%(slideid)s", 
 								"sha256": "%(sha256)s",
+								"md5sum": "%(md5sum)s",
 								"schema": "Microscopy",
 								"table": "Scan"
 							}
@@ -167,6 +171,7 @@ Below is a sample of an configuration file. It:
 								"ID": "%(sha256)s",
 								"Slide ID": "%(slideid)s",
 								"Original Filename": "%(basename)s",
+								"MD5": "%(md5sum)s",
 								"File Size": "%(nbytes)d"
 							},
 							"webconn": "foo",
