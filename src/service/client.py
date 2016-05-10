@@ -186,7 +186,7 @@ class ErmrestClient (object):
                     retry = True
                 else:
                     raise
-            except BadStatusLine, CannotSendRequest:
+            except (BadStatusLine, CannotSendRequest):
                 retry = True
             except:
                 raise
