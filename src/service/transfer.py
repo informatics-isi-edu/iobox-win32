@@ -137,7 +137,7 @@ class Workflow(object):
                 Add the URL encode values.
                 """
                 prefix = disposition.get('prefix', '') % outputDict
-                resources = disposition['resources']
+                resources = disposition['output']
                 for resource in resources.keys():
                     value = resources[resource] % outputDict
                     quote = self.basicDict['urlQuote'](value, safe='')
@@ -147,7 +147,7 @@ class Workflow(object):
                 Add the templates.
                 """
                 prefix = disposition.get('prefix', '') % outputDict
-                templates = disposition['templates']
+                templates = disposition['output']
                 for template in templates.keys():
                     value = templates[template] % outputDict
                     outputDict.update({'%s%s' % (prefix, template): value})
