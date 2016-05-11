@@ -9,6 +9,7 @@ import winerror
 import errno
 from client import ErmrestHTTPException, ErmrestClient
 from httplib import CONFLICT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT, REQUEST_TIMEOUT
+from datetime import datetime
 
 """
 Class for applying the workflow rules.
@@ -66,7 +67,10 @@ class Workflow(object):
     def processFile(self, filename, action):
         self.findRule(filename)
         if self.rule:
-            self.applyDisposition(action)
+            try:
+                self.applyDisposition(action)
+            except:
+                self.moveFile(filename, 'failure')
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
             self.moveFile(filename, 'failure')
@@ -91,60 +95,96 @@ class Workflow(object):
     """
     def applyDisposition(self, action):
         complete = True
-        ouputDict = dict()
-        ouputDict.update({'basename': self.basicDict['basename'](self.filename)})
-        ouputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
+        outputDict = dict()
+        outputDict.update({'basename': self.basicDict['basename'](self.filename)})
+        outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
         for disposition in self.rule['disposition']:
             if disposition['handler'] == 'patterngroups':
                 """
                 Add the pattern groups.
                 """
                 pattern = self.rule.get('pattern', None)
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 groups = self.basicDict['patterngroups'](pattern, self.filename, prefix)
                 if groups:
                     for group in groups.keys():
-                        ouputDict.update({group: groups[group]})
+                        outputDict.update({group: groups[group]})
             elif disposition['handler'] == 'sha256':
                 """
                 Add the checksum of the file.
                 """
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 sha256 = self.basicDict['sha256sum'](self.filename)
-                ouputDict.update({'%ssha256' % prefix: sha256})
+                outputDict.update({'%ssha256' % prefix: sha256})
             elif disposition['handler'] == 'md5sum':
                 """
                 Add the base64 digest string of the file computed with the md5 utility.
                 """
                 chunk_size = disposition.get('chunk_size', 100000000)
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 md5sum = self.basicDict['md5sum'](self.filename, chunk_size)
-                ouputDict.update({'%smd5sum' % prefix: md5sum})
+                outputDict.update({'%smd5sum' % prefix: md5sum})
+            elif disposition['handler'] == 'mtime':
+                """
+                Add the modification time in the specified format.
+                """
+                prefix = disposition.get('prefix', '') % outputDict
+                format = '%Y-%m-%d %H:%M:%S.%f'
+                mtime = self.basicDict['mtime'](self.filename)
+                outputDict.update({'%smtime' % prefix: datetime.strftime(mtime, format)})
             elif disposition['handler'] == 'urlQuote':
                 """
                 Add the URL encode values.
                 """
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 resources = disposition['resources']
                 for resource in resources.keys():
-                    value = resources[resource] % ouputDict
+                    value = resources[resource] % outputDict
                     quote = self.basicDict['urlQuote'](value, safe='')
-                    ouputDict.update({'%s%s' % (prefix, resource): quote})
+                    outputDict.update({'%s%s' % (prefix, resource): quote})
             elif disposition['handler'] == 'templates':
                 """
                 Add the templates.
                 """
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 templates = disposition['templates']
                 for template in templates.keys():
-                    value = templates[template] % ouputDict
-                    ouputDict.update({'%s%s' % (prefix, template): value})
+                    value = templates[template] % outputDict
+                    outputDict.update({'%s%s' % (prefix, template): value})
+            elif disposition['handler'] == 'datetime':
+                """
+                Handle date and time types.
+                """
+                success = False
+                prefix = disposition.get('prefix', '') % outputDict
+                input = disposition.get('input', None)
+                output = disposition.get('output', None)
+                if input != None and output != None:
+                    input_date_string = input.get('date_string', None)
+                    if input_date_string != None:
+                        input_format = input.get('format', '%Y-%m-%d %H:%M:%S.%f')
+                        input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
+                        success = True
+                        for name in output.keys():
+                            if not 'format' in output[name]:
+                                success = False
+                                break
+                            output_format = output[name].get('format')
+                            value = input_datetime.strftime(output_format)
+                            outputDict.update({'%s%s' % (prefix, name): value})
+                if success == False:
+                    serviceconfig.logger.debug("Bad datetime handler.")
+                    serviceconfig.sendMail('FAILURE', 'Bad datetime handler.')
+                    self.moveFile(self.filename, 'failure')
+                    complete = False
+                    break
+                    
             elif disposition['handler'] == 'webconn':
                 """
                 Add Web Client connections.
                 """
                 connections = disposition['connections']
-                prefix = disposition.get('prefix', '') % ouputDict
+                prefix = disposition.get('prefix', '') % outputDict
                 for key in connections.keys():
                     webcli = self.clients.get('%s%s' % (prefix, key), None)
                     if webcli == None:
@@ -184,7 +224,7 @@ class Workflow(object):
                                                basicDict=self.basicDict)
                         webcli.connect()
                         self.clients.update({'%s%s' % (prefix, key): webcli})
-                    ouputDict.update({'%s%s' % (prefix, key): webcli})
+                    outputDict.update({'%s%s' % (prefix, key): webcli})
                 if complete == False:
                     break
             elif disposition['handler'] == 'ermrest':
@@ -192,8 +232,8 @@ class Workflow(object):
                 Execute an ermrest request.
                 """
                 method = disposition.get('method', None)
-                url = disposition.get('url', None) % ouputDict
-                webcli = ouputDict[disposition.get('webconn', None) % ouputDict]
+                url = disposition.get('url', None) % outputDict
+                webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 failure = disposition.get('failure', None)
                 body = []
                 if method == 'POST':
@@ -204,7 +244,7 @@ class Workflow(object):
                     cols = dict()
                     for col in colmap.keys():
                         try:
-                            value = colmap[col] % ouputDict
+                            value = colmap[col] % outputDict
                         except:
                             value = colmap[col]
                         cols.update({col: value})
@@ -229,10 +269,10 @@ class Workflow(object):
                     """
                     cols = dict()
                     for col in group_key.keys():
-                        value = group_key[col] % ouputDict
+                        value = group_key[col] % outputDict
                         cols.update({col: value})
                     for col in target_columns.keys():
-                        value = target_columns[col] % ouputDict
+                        value = target_columns[col] % outputDict
                         cols.update({col: value})
                     body.append(cols)
                     serviceconfig.logger.debug("PUT body: %s" % json.dumps(body))
@@ -258,7 +298,7 @@ class Workflow(object):
                         et, ev, tb = sys.exc_info()
                         serviceconfig.sendMail('FAILURE ERMREST', 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     if success==False and failure:
-                        serviceconfig.logger.debug("failure action: %s" % json.dumps(ouputDict))
+                        serviceconfig.logger.debug("failure action: %s" % json.dumps(outputDict))
                     if success==False:
                         complete = False
                         self.moveFile(self.filename, failure)
@@ -267,11 +307,11 @@ class Workflow(object):
                 """
                 Upload the file.
                 """
-                url = disposition.get('url', None) % ouputDict
+                url = disposition.get('url', None) % outputDict
                 o = urlparse.urlparse(url)
                 object_url = o.path
                 chunk_size = disposition.get('chunk_size', 100000000)
-                webcli = ouputDict[disposition.get('webconn', None) % ouputDict]
+                webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     continue

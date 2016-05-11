@@ -29,6 +29,7 @@ import hashlib
 import time
 import base64
 from transfer import Workflow
+from datetime import datetime
 
 import serviceconfig
 
@@ -57,6 +58,7 @@ class ObserverManager(object):
         self.basicDict = dict()
         self.basicDict.update({'basename': os.path.basename})
         self.basicDict.update({'nbytes': self.nbytes})
+        self.basicDict.update({'mtime': self.mtime})
         self.basicDict.update({'sha256sum': self.sha256sum})
         self.basicDict.update({'md5sum': self.md5sum})
         self.basicDict.update({'patterngroups': self.patterngroups})
@@ -135,6 +137,12 @@ class ObserverManager(object):
     """
     def nbytes(self, filename):
         return os.stat(filename).st_size
+        
+    """
+    Get the file last modification time.
+    """
+    def mtime(self, filename):
+        return datetime.utcfromtimestamp(os.path.getmtime(filename))
         
     """
     Get the checksum of the file.
