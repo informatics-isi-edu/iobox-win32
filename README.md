@@ -65,10 +65,10 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
 1. We provide some basic metadata like `basename, nbytes, 
    sha256, md5sum, mtime, patterngroups, urlQuote`, etc. 
    at the start of the disposition sequence.
-1. The `mtime` handler  generates the UTC last modification timestamp 
+1. The **mtime** handler  generates the UTC last modification timestamp 
    of the file in the format `%Y-%m-%d %H:%M:%S.%f`. The format 
    directives are the ones used by Python.
-1. The `datetime` handler converts a timestamp defined in the `input` 
+1. The **datetime** handler converts a timestamp defined in the `input` 
    section from one format to another one defined in the `output` 
    section. The input timestamp string is defined in the `date_string` 
    parameter and its format in the `format` parameter. The `output` 
