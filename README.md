@@ -73,19 +73,21 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
    section. The input timestamp string is defined in the `date_string` 
    parameter and its format in the `format` parameter. The `output` 
    section contains the `format` to convert to. Example:
+
    ```
-   {
-      "handler": "datetime",
-      "input": {
+      {
+         "handler": "datetime",
+         "input": {
                   "date_string": "2016-05-06 20:39:08.982442",
                   "format": "%Y-%m-%d %H:%M:%S.%f"
                },
-      "output": {
+         "output": {
                   "date": {
                               "format": "%Y-%m-%d"
                           }
                 }
-   }
+      }
+
    ```
 1. Each disposition block performs work and outputs some more
    metadata.  **ermrest** and **hatrac** handlers should output useful info
