@@ -63,8 +63,30 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
      will optional prefix metadata field names based on the presence
      of a `prefix` key in the rule block.
 1. We provide some basic metadata like `basename, nbytes, 
-   sha256, md5sum, patterngroups, urlQuote`, etc. 
+   sha256, md5sum, mtime, patterngroups, urlQuote`, etc. 
    at the start of the disposition sequence.
+1. The `mtime` handler  generates the UTC last modification timestamp 
+   of the file in the format `%Y-%m-%d %H:%M:%S.%f`. The format 
+   directives are the ones used by Python.
+1. The `datetime` handler converts a timestamp defined in the `input` 
+   section from one format to another one defined in the `output` 
+   section. The input timestamp string is defined in the `date_string` 
+   parameter and its format in the `format` parameter. The `output` 
+   section contains the `format` to convert to. Example:
+   ```
+   {
+      "handler": "datetime",
+      "input": {
+                  "date_string": "2016-05-06 20:39:08.982442",
+                  "format": "%Y-%m-%d %H:%M:%S.%f"
+               },
+      "output": {
+                  "date": {
+                              "format": "%Y-%m-%d"
+                          }
+                }
+   }
+   ```
 1. Each disposition block performs work and outputs some more
    metadata.  **ermrest** and **hatrac** handlers should output useful info
    like the resulting table row (including server-generated default
@@ -137,19 +159,33 @@ Below is a sample of an configuration file. It:
 							"handler": "md5sum"
 						},
 						{
+							"handler": "mtime"
+						},
+						{
+							"handler": "datetime",
+							"input": {
+										"date_string": "%(mtime)s",
+										"format": "%Y-%m-%d %H:%M:%S.%f"
+									 },
+							"output": {
+										"last_modified_date": {
+																"format": "%Y-%m-%d"
+															  }
+									  }
+						},
+						{
 							"handler": "urlQuote",
 							"prefix": "encode.",
-							"resources": {
+							"output": {
 								"slideid": "%(slideid)s", 
 								"sha256": "%(sha256)s",
-								"md5sum": "%(md5sum)s",
 								"schema": "Microscopy",
 								"table": "Scan"
 							}
 						},
 						{
 							"handler": "templates",
-							"templates": {
+							"output": {
 								"objname": "%(encode.schema)s/%(encode.slideid)s/%(encode.sha256)s.czi"
 							}
 						},
@@ -172,7 +208,8 @@ Below is a sample of an configuration file. It:
 								"Slide ID": "%(slideid)s",
 								"Original Filename": "%(basename)s",
 								"MD5": "%(md5sum)s",
-								"File Size": "%(nbytes)d"
+								"File Size": "%(nbytes)d",
+								"Modified Date": "%(last_modified_date)s"
 							},
 							"webconn": "foo",
 							"url": "https://foo.org/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
@@ -245,7 +282,14 @@ The sample is using the following:
      updated with the key `slideid`.
    - **"handler": "sha256"**: generates the `sha256` of the file. The Python dictionary is
      updated with the key `sha256`.
-   - **"handler": "urlQuote"**: encodes URL the values specified by the `resources`.
+   - **"handler": "md5sum"**: generates the `base64` of the `md5` digest string of the file. The Python 
+     dictionary is updated with the key `md5sum`.
+   - **"handler": "mtime"**: generates the last modification timestamp of the file in the 
+     `%Y-%m-%d %H:%M:%S.%f` format. The Python dictionary is updated with the key `mtime`.
+   - **"handler": "datetime"**: generates the last modification date of the file by 
+     converting the last modification timestamp of the file to the `%Y-%m-%d` format.
+     The result updates the Python dictionary with the key `last_modified_date`.
+   - **"handler": "urlQuote"**: encodes URL the values specified in the `input`.
      The Python dictionary is updated with the keys `encode.slideid, 
      encode.sha256, encode.schema and encode.table`.
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
