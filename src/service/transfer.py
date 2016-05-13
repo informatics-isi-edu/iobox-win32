@@ -166,10 +166,7 @@ class Workflow(object):
                         input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
                         success = True
                         for name in output.keys():
-                            if not 'format' in output[name]:
-                                success = False
-                                break
-                            output_format = output[name].get('format')
+                            output_format = output[name]
                             value = input_datetime.strftime(output_format)
                             outputDict.update({'%s%s' % (prefix, name): value})
                 if success == False:

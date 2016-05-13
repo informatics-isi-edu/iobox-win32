@@ -72,7 +72,7 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
    section from one format to another one defined in the `output` 
    section. The input timestamp string is defined in the `date_string` 
    parameter and its format in the `format` parameter. The `output` 
-   section contains the `format` to convert to. Example:
+   section contains the format to convert to. Example:
 
    ```
       {
@@ -82,9 +82,7 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
                   "format": "%Y-%m-%d %H:%M:%S.%f"
                },
          "output": {
-                  "date": {
-                              "format": "%Y-%m-%d"
-                          }
+                  "date": "%Y-%m-%d"
                 }
       }
 
@@ -128,7 +126,7 @@ Below is a sample of an configuration file. It:
 1. Generates the `sha256` of the file.
 1. Encodes URL values that will be used in the URL.
 1. Defines Web Connections that will be used by **ermrest** and **hatrac**.
-1. Creates an entry with the `Original Filename` and the `File Size`.
+1. Creates or updates an entity with the `ID`, `Slide ID`, `Original Filename`, `MD5`, `File Size` and the `Modified Date`.
 1. Uploads in **hatrac** the file.
 1. Updates the entry with the `Filename` as its `sha256`.
 
@@ -170,9 +168,7 @@ Below is a sample of an configuration file. It:
 										"format": "%Y-%m-%d %H:%M:%S.%f"
 									 },
 							"output": {
-										"last_modified_date": {
-																"format": "%Y-%m-%d"
-															  }
+										"last_modified_date": "%Y-%m-%d"
 									  }
 						},
 						{
@@ -204,7 +200,7 @@ Below is a sample of an configuration file. It:
 						},
 						{
 							"handler": "ermrest",
-							"method": "POST",
+							"method": "PUT",
 							"colmap": {
 								"ID": "%(sha256)s",
 								"Slide ID": "%(slideid)s",
