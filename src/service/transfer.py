@@ -233,6 +233,7 @@ class Workflow(object):
                 webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 failure = disposition.get('failure', None)
                 body = []
+                ignoreErrorCodes = []
                 if method == 'POST' or method == 'PUT' and disposition.get('colmap', None) != None:
                     """
                     Build the POST body.
@@ -280,7 +281,9 @@ class Workflow(object):
                     success=False
                     try:
                         headers = {'Content-Type': 'application/json'}
-                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), json.dumps(body), headers)
+                        if method == 'POST':
+                            ignoreErrorCodes = [CONFLICT]
+                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), json.dumps(body), headers, ignoreErrorCodes=ignoreErrorCodes)
                         resp.read()
                         success = True
                         serviceconfig.sendMail('SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))

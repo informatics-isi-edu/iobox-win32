@@ -163,7 +163,7 @@ class ErmrestClient (object):
     """
     Send a request.
     """
-    def send_request(self, method, url, body='', headers={}, sendData=False):
+    def send_request(self, method, url, body='', headers={}, sendData=False, ignoreErrorCodes=[]):
         try:
             if self.header:
                 headers.update(self.header)
@@ -225,7 +225,8 @@ class ErmrestClient (object):
                      self.webconn.send(body)
                 resp = self.webconn.getresponse()
             if resp.status not in [OK, CREATED, ACCEPTED, NO_CONTENT]:
-                serviceconfig.logger.error('Error response: method="%s", url="%s", status=%i, error: %s' % (method, url, resp.status, resp.read()))
+                if resp.status not in ignoreErrorCodes:
+                    serviceconfig.logger.error('Error response: method="%s", url="%s", status=%i, error: %s' % (method, url, resp.status, resp.read()))
                 raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, resp.read()), resp.status)
             return resp
         except ErmrestHTTPException:
@@ -244,7 +245,7 @@ class ErmrestClient (object):
         try:
             url = namespace_path
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-            resp = self.send_request('GET', url, '', headers)
+            resp = self.send_request('GET', url, '', headers, ignoreErrorCodes=[NOT_FOUND])
             namespaces = json.loads(resp.read())
             return namespaces
         except ErmrestHTTPException, e:
@@ -298,7 +299,7 @@ class ErmrestClient (object):
         if url != None:
             headers = {'Accept': '*'}
             try:
-                resp = self.send_request('HEAD', url, headers=headers)
+                resp = self.send_request('HEAD', url, headers=headers, ignoreErrorCodes=[NOT_FOUND])
                 resp.read()
                 ret = resp.getheader('content-md5', None)
             except:
