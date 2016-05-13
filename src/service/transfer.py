@@ -233,7 +233,7 @@ class Workflow(object):
                 webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 failure = disposition.get('failure', None)
                 body = []
-                if method == 'POST':
+                if method == 'POST' or method == 'PUT' and disposition.get('colmap', None) != None:
                     """
                     Build the POST body.
                     """
@@ -246,7 +246,7 @@ class Workflow(object):
                             value = colmap[col]
                         cols.update({col: value})
                     body.append(cols)
-                    serviceconfig.logger.debug("POST body: %s" % json.dumps(body))
+                    serviceconfig.logger.debug("Entity body: %s" % json.dumps(body))
                 elif method == 'PUT':
                     """
                     Build the PUT target.
