@@ -155,8 +155,14 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
 1. We might have additional parameters to each work units to describe
    failure/retry policies or overrides.
 
-IObox (win32) will look for the configuration file at `%HOMEPATH%\Documents\iobox\config\outbox.conf`.
-
+IObox (win32) will look for the configuration file at `%HOMEPATH%\Documents\iobox\config\outbox.conf`. 
+If the configuration file does not exist, or is invalid, then the Windows service 
+will not start, and the error will be logged into the `%HOMEPATH%\Documents\iobox_service.log` file. 
+Example of such messages:
+```
+2016-05-16 11:30:04,717: ERROR <serviceconfig>: Configuration file: "C:\Users\your_user_id\Documents\iobox\config\outbox.conf" does not exist.
+2016-05-16 11:31:30,269: ERROR <serviceconfig>: Malformed configuration file: Expecting property name: line 56 column 8 (char 1548)
+```
 Below is a sample of an configuration file. It:
 
 1. Identifies a `slideid` from the file name.
