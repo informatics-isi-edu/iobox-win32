@@ -90,7 +90,44 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
 1. Each disposition block performs work and outputs some more
    metadata.  **ermrest** and **hatrac** handlers should output useful info
    like the resulting table row (including server-generated default
-   column values) or object version.
+   column values) or object version. For the **ermrest** handler, 
+   the **colmap** specifies the body request with the columns 
+   mapping to be created or updated. Example:
+
+   ```
+      {
+         "handler": "ermrest",
+         "method": "POST",
+         "colmap": {
+                  "column1": 1,
+                  "column2": "foo"
+               },
+         "url": "https://foo.org/ermrest/catalog/1/entity/table1"
+      }
+
+   ```
+   The **POST** request, will create a row and will return a **409 Conflict** 
+   error response if it already exists, while the **PUT** _entity_ request 
+   will create a row if no match is found or update it if it already exists. 
+   For the **PUT** _attributegroup_ request, the **group_key** specifies the 
+   columns matching an existing stored row, while the **target_columns** 
+   specifies the columns to be updated. The **url** will specify only the 
+   table to be updated. Example:
+
+   ```
+      {
+         "handler": "ermrest",
+         "method": "PUT",
+         "group_key": {
+                  "column1": 1
+               },
+         "target_columns": {
+                  "column2": "foo"
+               },
+         "url": "https://foo.org/ermrest/catalog/1/attributegroup/table1"
+       }
+
+   ```
 1. In the **hatrac** handlers, if the md5sum of the file to be uploaded 
    matches the one existing in **hatrac**, then the upload process is skipped.
 1. Output metadata are optional qualified with a **prefix** of that block.
