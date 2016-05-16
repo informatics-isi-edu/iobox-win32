@@ -64,6 +64,7 @@ def load():
     Load configuration file
     """
     global logger, mail_server, mail_sender, mail_receiver
+    hasLogger = False
     cfg = {}
     if os.path.exists(default_config_filename):
         f = open(default_config_filename, 'r')
@@ -76,15 +77,27 @@ def load():
                 rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
                 logger.addHandler(rotatingFileHandler)
                 logger.setLevel(__LOGLEVEL.get(loglevel))
+                hasLogger = True
             else:
                 logging.getLogger().addHandler(logging.NullHandler())
             logger.debug("config: %s" % cfg)
         except ValueError as e:
+            if hasLogger == False:
+                serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
+                rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
+                rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
+                logger.addHandler(rotatingFileHandler)
+                logger.setLevel(__LOGLEVEL.get('debug'))
             logger.error('Malformed configuration file: %s' % e)
             return None
         else:
             f.close()
     else:
+        serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
+        rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
+        rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
+        logger.addHandler(rotatingFileHandler)
+        logger.setLevel(__LOGLEVEL.get('debug'))
         logger.error('Configuration file: "%s" does not exist.' % default_config_filename)
         return None
     
