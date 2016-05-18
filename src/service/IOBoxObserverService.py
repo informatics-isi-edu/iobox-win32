@@ -47,4 +47,8 @@ class IOBoxObserverService(win32serviceutil.ServiceFramework):
         if self.observerManager:
             self.observerManager.start()
             win32event.SetEvent(self.hWaitStop)
+        else:
+            errorMessage = serviceconfig.getLogErrorMsg()
+            if errorMessage != None:
+                servicemanager.LogErrorMsg(errorMessage)
 
