@@ -48,9 +48,11 @@ class Workflow(object):
     """
     Recover uploading the files.
     """
-    def recoverFiles(self):
-        for f in os.listdir(self.inbox):
-            filename = '%s%s%s' % (self.inbox, os.sep, f)
+    def recoverFiles(self, parent=None):
+        if parent == None:
+            parent = self.inbox
+        for f in os.listdir(parent):
+            filename = '%s%s%s' % (parent, os.sep, f)
             if os.path.isfile(filename):
                 serviceconfig.logger.debug('Recovering %s' % filename)
                 try:
@@ -60,20 +62,31 @@ class Workflow(object):
                     serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                     serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                     serviceconfig.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            else:
+                serviceconfig.logger.debug('Recovering from directory %s' % filename)
+                self.recoverFiles(parent=filename)
     
     """
     Upload a file.
     """
     def processFile(self, filename, action):
+        if action in ['new', 'recover'] :
+            fromDir = self.inbox
+        elif action == 'retry':
+            fromDir = self.retry
+        elif action == 'transfer':
+            fromDir = self.transfer
+        else:
+            fromDir = None
         self.findRule(filename)
         if self.rule:
             try:
-                self.applyDisposition(action)
+                self.applyDisposition(fromDir)
             except:
-                self.moveFile(filename, 'failure')
+                self.moveFile(filename, 'failure', fromDir)
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
-            self.moveFile(filename, 'failure')
+            self.moveFile(filename, 'failure', fromDir)
     
     """
     Find the rule for uploading a file.
@@ -93,7 +106,7 @@ class Workflow(object):
     """
     Apply the dispositions of the rule.
     """
-    def applyDisposition(self, action):
+    def applyDisposition(self, fromDir):
         complete = True
         outputDict = dict()
         outputDict.update({'basename': self.basicDict['basename'](self.filename)})
@@ -172,7 +185,7 @@ class Workflow(object):
                 if success == False:
                     serviceconfig.logger.debug("Bad datetime handler.")
                     serviceconfig.sendMail('FAILURE', 'Bad datetime handler.')
-                    self.moveFile(self.filename, 'failure')
+                    self.moveFile(self.filename, 'failure', fromDir)
                     complete = False
                     break
                     
@@ -191,7 +204,7 @@ class Workflow(object):
                             complete = False
                             serviceconfig.logger.debug("Credentials file was not specified.")
                             serviceconfig.sendMail('FAILURE', 'Credentials file was not specified.')
-                            self.moveFile(self.filename, 'failure')
+                            self.moveFile(self.filename, 'failure', fromDir)
                             break
                         try:
                             if os.path.exists(credentials) and os.path.isfile(credentials):
@@ -203,13 +216,13 @@ class Workflow(object):
                                 complete = False
                                 serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
                                 serviceconfig.sendMail('FAILURE', 'Bad credentials file "%s".' % credentials)
-                                self.moveFile(self.filename, 'failure')
+                                self.moveFile(self.filename, 'failure', fromDir)
                         except:
                             complete = False
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                             serviceconfig.sendMail('FAILURE', 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                            self.moveFile(self.filename, 'failure')
+                            self.moveFile(self.filename, 'failure', fromDir)
                             break
                         webcli = ErmrestClient(scheme=connection.get('scheme', None), \
                                                host=connection.get("host", None), \
@@ -301,7 +314,7 @@ class Workflow(object):
                         serviceconfig.logger.debug("failure action: %s" % json.dumps(outputDict))
                     if success==False:
                         complete = False
-                        self.moveFile(self.filename, failure)
+                        self.moveFile(self.filename, failure, fromDir)
                         break
             elif disposition['handler'] == 'hatrac':
                 """
@@ -347,12 +360,12 @@ class Workflow(object):
                                     break
                         if success == False:
                             complete = False
-                            self.moveFile(self.filename, failure)
+                            self.moveFile(self.filename, failure, fromDir)
                             break
                     else:
                         serviceconfig.sendMail('FAILURE ERMREST', 'Namespace "%s" does not exist.' % '/'.join(namespaces))
                         complete = False
-                        self.moveFile(self.filename, failure)
+                        self.moveFile(self.filename, failure, fromDir)
                         break
                 try:
                     job_id, status = webcli.uploadFile(object_url, self.filename, chunk_size)
@@ -361,11 +374,11 @@ class Workflow(object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     complete = False
-                    self.moveFile(self.filename, failure)
+                    self.moveFile(self.filename, failure, fromDir)
                     serviceconfig.sendMail('FAILURE TRANSFER', 'Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     break
         if complete == True:
-            self.moveFile(self.filename, 'success')
+            self.moveFile(self.filename, 'success', fromDir)
 
     """
     Check if the file is ready for processing, i.e. if copy/move into the directory has finished.
@@ -407,7 +420,7 @@ class Workflow(object):
     """
     Move the file into a directory based on the process result.
     """
-    def moveFile(self, filename, action):
+    def moveFile(self, filename, action, fromDir):
         if action == 'success':
             subject = 'SUCCESS'
         else:
@@ -424,12 +437,42 @@ class Workflow(object):
             serviceconfig.logger.error('Unknown action to move a file "%s"' % action)
             return
         
+        """
+        get the relative path of the filename parent
+        """
+        dirnameParts = os.path.dirname(filename).split(os.sep)
+        fromDirParts = fromDir.split(os.sep)
+        dirnameParts = dirnameParts[len(fromDirParts):]
+        
+        """
+        set the path of the destination directory
+        """
+        toDir = [toDir]
+        toDir.extend(dirnameParts)
+        toDir = os.sep.join(toDir)
+        
+        if os.path.exists(toDir) == False:
+            os.makedirs(toDir)
         if os.path.isfile('%s%s%s' % (toDir, os.sep, os.path.basename(filename))):
             os.remove('%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
-        serviceconfig.logger.info('Moved file: "%s" to the "%s" directory.' % (os.path.basename(filename), toDir))
+        serviceconfig.logger.info('Moved file: "%s" to the "%s" directory.' % (filename, toDir))
         os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
+        time.sleep(1)
         serviceconfig.sendMail('%s %s' % (subject, os.path.basename(filename)), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
+        self.cleanDirectory(fromDir, dirnameParts)
     
+    """
+    Remove empty directories from the fromDir
+    """
+    def cleanDirectory(self, fromDir, dirnameParts):
+        if len(dirnameParts) > 0:
+            dirname = '%s%s%s' % (fromDir,os.sep,os.sep.join(dirnameParts))
+            if len(os.listdir(dirname)) == 0:
+                os.rmdir(dirname)
+                time.sleep(1)
+                self.cleanDirectory(fromDir, dirnameParts[:-1])
+
+            
 def create_uri_friendly_file_path(filename):
     """
     Creates a full file path with uri-friendly path separators so that it can
