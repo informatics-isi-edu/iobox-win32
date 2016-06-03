@@ -28,17 +28,33 @@ class Workflow(object):
         self.basicDict = observer.basicDict
 
     """
+    Get recursively the files of a directory.
+    """
+    def getFiles(self, parent):
+        ret = []
+        if parent != None:
+            for f in os.listdir(parent):
+                filename = '%s%s%s' % (parent, os.sep, f)
+                if os.path.isfile(filename):
+                    ret.append(filename)
+                else:
+                    ret.extend(self.getFiles(filename))
+        return ret
+    
+    """
     Retry uploading the files.
     """
     def processRetry(self):
         try:
-            retryFiles = [ f for f in os.listdir(self.retry) if os.path.isfile(os.path.join(self.retry,f)) ]
-            for f in retryFiles:
-                self.processFile(os.path.join(self.retry,f), 'retry')
+            retryFiles = self.getFiles(self.retry)
+            for filename in retryFiles:
+                serviceconfig.logger.debug('Retrying %s' % filename)
+                self.processFile(filename, 'retry')
                 
-            transferFiles = [ f for f in os.listdir(self.transfer) if os.path.isfile(os.path.join(self.transfer,f)) ]
-            for f in transferFiles:
-                self.processFile(os.path.join(self.transfer,f), 'transfer')
+            transferFiles = self.getFiles(self.transfer)
+            for filename in transferFiles:
+                serviceconfig.logger.debug('Retrying transfer %s' % filename)
+                self.processFile(filename, 'transfer')
         except:
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Processing exception during retry "%s"' % str(ev))
@@ -48,23 +64,17 @@ class Workflow(object):
     """
     Recover uploading the files.
     """
-    def recoverFiles(self, parent=None):
-        if parent == None:
-            parent = self.inbox
-        for f in os.listdir(parent):
-            filename = '%s%s%s' % (parent, os.sep, f)
-            if os.path.isfile(filename):
-                serviceconfig.logger.debug('Recovering %s' % filename)
-                try:
-                    self.processFile(filename, 'recover')
-                except:
-                    et, ev, tb = sys.exc_info()
-                    serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
-                    serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                    serviceconfig.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-            else:
-                serviceconfig.logger.debug('Recovering from directory %s' % filename)
-                self.recoverFiles(parent=filename)
+    def recoverFiles(self):
+        inboxFiles = self.getFiles(self.inbox)
+        for filename in inboxFiles:
+            serviceconfig.logger.debug('Recovering %s' % filename)
+            try:
+                self.processFile(filename, 'recover')
+            except:
+                et, ev, tb = sys.exc_info()
+                serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
+                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                serviceconfig.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
     
     """
     Upload a file.
