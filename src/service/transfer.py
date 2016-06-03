@@ -260,7 +260,8 @@ class Workflow(object):
                             value = colmap[col]
                         cols.update({col: value})
                     body.append(cols)
-                    serviceconfig.logger.debug("Entity body: %s" % json.dumps(body))
+                    body = self.json2csv(body)
+                    serviceconfig.logger.debug("Entity body: %s" % body)
                 elif method == 'PUT':
                     """
                     Build the PUT target.
@@ -286,17 +287,22 @@ class Workflow(object):
                         value = target_columns[col] % outputDict
                         cols.update({col: value})
                     body.append(cols)
-                    serviceconfig.logger.debug("PUT body: %s" % json.dumps(body))
+                    body = self.json2csv(body)
+                    serviceconfig.logger.debug("PUT body: %s" % body)
                 if webcli:
                     """
                     Send the ermrest request
                     """
                     success=False
                     try:
-                        headers = {'Content-Type': 'application/json'}
+                        if method in ['POST', 'PUT']:
+                            headers = {'Content-Type': 'text/csv'}
+                        else:
+                            headers = {'Content-Type': 'application/json'}
+                            body = json.dumps(body)
                         if method == 'POST':
                             ignoreErrorCodes = [CONFLICT]
-                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), json.dumps(body), headers, ignoreErrorCodes=ignoreErrorCodes)
+                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes)
                         resp.read()
                         success = True
                         serviceconfig.sendMail('SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))
@@ -473,6 +479,23 @@ class Workflow(object):
                 self.cleanDirectory(fromDir, dirnameParts[:-1])
 
             
+    """
+    Convert a JSON body to CSV
+    """
+    def json2csv(self, body):
+        rows = []
+        columns = body[0].keys()
+        row = []
+        for col in columns:
+            row.append('"%s"' % col.replace('"', '""'))
+        rows.append(','.join(row))
+        for row in body:
+            values = []
+            for col in columns:
+                values.append('"%s"' % row[col].replace('"', '""'))
+            rows.append(','.join(values))
+        return '\n'.join(rows)
+        
 def create_uri_friendly_file_path(filename):
     """
     Creates a full file path with uri-friendly path separators so that it can
