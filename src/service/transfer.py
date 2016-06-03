@@ -454,6 +454,13 @@ class Workflow(object):
             return
         
         """
+        do nothing if destination is unchanged 
+        """
+        if fromDir == toDir:
+            serviceconfig.logger.info('File: "%s" remains on the "%s" directory.' % (filename, toDir))
+            return
+        
+        """
         get the relative path of the filename parent
         """
         dirnameParts = os.path.dirname(filename).split(os.sep)
