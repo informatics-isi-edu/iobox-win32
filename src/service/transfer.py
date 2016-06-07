@@ -379,6 +379,7 @@ class Workflow(object):
                             self.moveFile(self.filename, failure, fromDir)
                             break
                     else:
+                        serviceconfig.logger.debug('Can not upload the file "%s". The namespace "%s" does not exist and the "create_parents" option is not set to "true".' % (self.filename, '/'.join(namespaces)))
                         serviceconfig.sendMail('FAILURE ERMREST', 'Namespace "%s" does not exist.' % '/'.join(namespaces))
                         complete = False
                         self.moveFile(self.filename, failure, fromDir)
