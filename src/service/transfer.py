@@ -110,7 +110,7 @@ class Workflow(object):
                 if groups != None:
                     self.rule = rule
                     self.filename = filename
-                    serviceconfig.logger.debug('rule: "%s"' % pattern)
+                    serviceconfig.logger.debug('rule: "%s" applied to file: "%s"' % (pattern, filename))
                     break
 
     """

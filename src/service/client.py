@@ -167,6 +167,7 @@ class ErmrestClient (object):
         try:
             if self.header:
                 headers.update(self.header)
+            serviceconfig.logger.debug('Sending request: method="%s", url="%s", headers="%s", body="%s"' % (method, url, headers, body))
             retry = False
             try:
                 if sendData == False:
@@ -182,7 +183,7 @@ class ErmrestClient (object):
                     self.webconn.send(body)
                 resp = self.webconn.getresponse()
             except socket.error, e:
-                if e.errno == errno.WSAECONNRESET:
+                if e.errno == errno.WSAECONNRESET or e.errno == errno.WSAECONNABORTED:
                     retry = True
                 else:
                     raise
