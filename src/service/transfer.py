@@ -93,6 +93,9 @@ class Workflow(object):
             try:
                 self.applyDisposition(fromDir)
             except:
+                et, ev, tb = sys.exc_info()
+                serviceconfig.logger.error('got Processing exception during applyDisposition "%s"' % str(ev))
+                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                 self.moveFile(filename, 'failure', fromDir)
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
@@ -327,7 +330,7 @@ class Workflow(object):
                         et, ev, tb = sys.exc_info()
                         serviceconfig.sendMail('FAILURE ERMREST', 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     if success==False and failure:
-                        serviceconfig.logger.debug("failure action: %s" % json.dumps(outputDict))
+                        serviceconfig.logger.debug("failure action: %s" % failure)
                     if success==False:
                         complete = False
                         self.moveFile(self.filename, failure, fromDir)
@@ -510,7 +513,7 @@ class Workflow(object):
         for row in body:
             values = []
             for col in columns:
-                values.append('"%s"' % row[col].replace('"', '""'))
+                values.append('"%s"' % str(row[col]).replace('"', '""'))
             rows.append(','.join(values))
         return '\n'.join(rows)
         

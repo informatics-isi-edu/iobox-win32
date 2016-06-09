@@ -167,7 +167,7 @@ class ErmrestClient (object):
         try:
             if self.header:
                 headers.update(self.header)
-            serviceconfig.logger.debug('Sending request: method="%s", url="%s", headers="%s", body="%s"' % (method, url, headers, body))
+            serviceconfig.logger.debug('Sending request: method="%s", url="%s", headers="%s"' % (method, url, headers))
             retry = False
             try:
                 if sendData == False:
