@@ -323,7 +323,7 @@ class Workflow(object):
                         if method == 'POST' and e.status == CONFLICT:
                             success = True
                         else:
-                            if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT]:
+                            if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                 failure = 'retry'
                             serviceconfig.sendMail('FAILURE ERMREST', 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
                     except:
@@ -371,6 +371,8 @@ class Workflow(object):
                                     webcli.createNamespace('/'.join(urls))
                                     success = True
                                 except ErmrestHTTPException, e:
+                                    if e.retry==True:
+                                        failure = 'retry'
                                     success = False
                                     serviceconfig.sendMail('FAILURE ERMREST', 'ErmrestHTTPException: Can not create namespace "%s"\n. Error: "%s"' % ('/'.join(urls), str(e)))
                                     break
@@ -513,7 +515,10 @@ class Workflow(object):
         for row in body:
             values = []
             for col in columns:
-                values.append('"%s"' % str(row[col]).replace('"', '""'))
+                if row[col] != None:
+                    values.append('"%s"' % str(row[col]).replace('"', '""'))
+                else:
+                    values.append('')
             rows.append(','.join(values))
         return '\n'.join(rows)
         

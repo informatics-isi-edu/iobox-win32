@@ -32,10 +32,11 @@ import socket
 import errno
 
 class ErmrestHTTPException(Exception):
-    def __init__(self, value, status):
+    def __init__(self, value, status, retry=False):
         super(ErmrestHTTPException, self).__init__(value)
         self.value = value
         self.status = status
+        self.retry = retry
         
     def __str__(self):
         message = "%s." % self.value
@@ -182,11 +183,10 @@ class ErmrestClient (object):
                     self.webconn.endheaders()
                     self.webconn.send(body)
                 resp = self.webconn.getresponse()
+                serviceconfig.logger.debug('Response: %d' % resp.status)
             except socket.error, e:
-                if e.errno == errno.WSAECONNRESET or e.errno == errno.WSAECONNABORTED:
-                    retry = True
-                else:
-                    raise
+                retry = True
+                serviceconfig.logger.debug('Socket error: %d' % (e.errno))
             except (BadStatusLine, CannotSendRequest):
                 retry = True
             except:
@@ -208,6 +208,7 @@ class ErmrestClient (object):
                      self.webconn.endheaders()
                      self.webconn.send(body)
                 resp = self.webconn.getresponse()
+                serviceconfig.logger.debug('Response: %d' % resp.status)
             if resp.status in [INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT]:
                 """ 
                 Resend the request 
@@ -225,10 +226,13 @@ class ErmrestClient (object):
                      self.webconn.endheaders()
                      self.webconn.send(body)
                 resp = self.webconn.getresponse()
+                serviceconfig.logger.debug('Response: %d' % resp.status)
             if resp.status not in [OK, CREATED, ACCEPTED, NO_CONTENT]:
                 if resp.status not in ignoreErrorCodes:
                     serviceconfig.logger.error('Error response: method="%s", url="%s", status=%i, error: %s' % (method, url, resp.status, resp.read()))
-                raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, resp.read()), resp.status)
+                else:
+                    serviceconfig.logger.error('Error response: %s' % (resp.read()))
+                raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, resp.read()), resp.status, retry)
             return resp
         except ErmrestHTTPException:
             raise
