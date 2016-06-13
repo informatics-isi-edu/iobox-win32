@@ -314,14 +314,14 @@ class Workflow(object):
                             headers = {'Content-Type': 'application/json'}
                             body = json.dumps(body)
                         if method == 'POST':
-                            ignoreErrorCodes = [CONFLICT]
+                            ignoreErrorCodes = []
                         resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes)
                         resp.read()
                         success = True
                         serviceconfig.sendMail('SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))
                     except ErmrestHTTPException, e:
                         if method == 'POST' and e.status == CONFLICT:
-                            success = True
+                            success = False
                         else:
                             if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                 failure = 'retry'
