@@ -168,7 +168,7 @@ class ErmrestClient (object):
         try:
             if self.header:
                 headers.update(self.header)
-            serviceconfig.logger.debug('Sending request: method="%s", url="%s", headers="%s"' % (method, url, headers))
+            serviceconfig.logger.debug('Sending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
             retry = False
             try:
                 if sendData == False:
@@ -197,8 +197,8 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('WARNING IOBox', 'The HTTPSConnection has been restarted on %s.\n' % self.host)
-                serviceconfig.logger.debug('Resending request: method="%s", url="%s"' % (method, url))
+                serviceconfig.sendMail('WARNING IOBox', 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s"' % (method, self.scheme, self.host, url))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
                 else:
@@ -215,8 +215,8 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('WARNING IOBox: HTTP exception: %d' % resp.status, 'The HTTPSConnection has been restarted on %s.\n' % self.host)
-                serviceconfig.logger.debug('Resending request: method="%s", url="%s"' % (method, url))
+                serviceconfig.sendMail('WARNING IOBox: HTTP exception: %d' % resp.status, 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
                 else:
@@ -229,7 +229,7 @@ class ErmrestClient (object):
                 serviceconfig.logger.debug('Response: %d' % resp.status)
             if resp.status not in [OK, CREATED, ACCEPTED, NO_CONTENT]:
                 if resp.status not in ignoreErrorCodes:
-                    serviceconfig.logger.error('Error response: method="%s", url="%s", status=%i, error: %s' % (method, url, resp.status, resp.read()))
+                    serviceconfig.logger.error('Error response: method="%s", url="%s://%s%s", status=%i, error: %s' % (method, self.scheme, self.host, url, resp.status, resp.read()))
                 else:
                     serviceconfig.logger.error('Error response: %s' % (resp.read()))
                 raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, resp.read()), resp.status, retry)
@@ -238,9 +238,9 @@ class ErmrestClient (object):
             raise
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('got HTTP exception: method="%s", url="%s", error="%s"' % (method, url, str(ev)))
+            serviceconfig.logger.error('got HTTP exception: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('FAILURE HTTP', 'Error generated during the HTTP request: method="%s", url="%s", error="%s"' % (method, url, str(ev)))
+            serviceconfig.sendMail('FAILURE HTTP', 'Error generated during the HTTP request: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
             raise
 
     """
@@ -257,11 +257,11 @@ class ErmrestClient (object):
             if e.status == NOT_FOUND:
                 return None
             else:
-                serviceconfig.logger.error('ErmrestHTTPException: Can not retrieve namespace "%s". Error: "%s"' % (namespace_path, str(e)))
+                serviceconfig.logger.error('ErmrestHTTPException: Can not retrieve namespace "%s://%s%s". Error: "%s"' % (self.scheme, self.host, namespace_path, str(e)))
                 raise
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Exception: Can not retrieve namespace "%s". Error: "%s"' % (namespace_path, str(ev)))
+            serviceconfig.logger.error('Exception: Can not retrieve namespace "%s://%s%s". Error: "%s"' % (self.scheme, self.host, namespace_path, str(ev)))
             raise
 
     """
@@ -273,10 +273,10 @@ class ErmrestClient (object):
             headers = {'Content-Type': 'application/x-hatrac-namespace', 'Accept': 'application/json'}
             resp = self.send_request('PUT', url, headers=headers)
             res = resp.read()
-            serviceconfig.logger.debug('Created namespace "%s".' % namespace_path)
+            serviceconfig.logger.debug('Created namespace "%s://%s%s".' % (self.scheme, self.host, namespace_path))
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not create namespace "%s". Error: "%s"' % (namespace_path, str(ev)))
+            serviceconfig.logger.error('Can not create namespace "%s://%s%s". Error: "%s"' % (self.scheme, self.host, namespace_path, str(ev)))
             raise
 
     """
@@ -290,7 +290,7 @@ class ErmrestClient (object):
             return (job_id, 'SUCCEEDED')
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not upload file "%s" in namespace "%s". Error: "%s"' % (filePath, object_url, str(ev)))
+            serviceconfig.logger.error('Can not upload file "%s" in namespace "%s://%s%s". Error: "%s"' % (filePath, self.scheme, self.host, object_url, str(ev)))
             raise
 
     """
@@ -327,11 +327,11 @@ class ErmrestClient (object):
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
             job_id = res.split('/')[-1][:-1]
-            serviceconfig.logger.debug('Created job_id "%s".' % job_id)
+            serviceconfig.logger.debug('Created job_id "%s" for url "%s://%s%s".' % (job_id, self.scheme, self.host, url))
             return job_id
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not create job for uploading file "%s" in object "%s". Error: "%s"' % (filePath, object_url, str(ev)))
+            serviceconfig.logger.error('Can not create job for uploading file "%s" in object "%s://%s%s". Error: "%s"' % (filePath, self.scheme, self.host, url, str(ev)))
             raise
 
     """
@@ -360,7 +360,7 @@ class ErmrestClient (object):
             f.close()
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not upload chunk for file "%s" in namespace "%s" and job_id "%s". Error: "%s"' % (filePath, object_url, job_id, str(ev)))
+            serviceconfig.logger.error('Can not upload chunk for file "%s" in namespace "%s://%s%s" and job_id "%s". Error: "%s"' % (filePath, self.scheme, self.host, url, job_id, str(ev)))
             try:
                 f.close()
                 self.cancelJob(object_url, job_id)
@@ -380,7 +380,7 @@ class ErmrestClient (object):
             res = resp.read()
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not finalize job "%s" for object "%s". Error: "%s"' % (job_idobject_url, str(ev)))
+            serviceconfig.logger.error('Can not finalize job "%s" for object "%s://%s%s". Error: "%s"' % (job_id, self.scheme, self.host, url, str(ev)))
             raise
             
     """
@@ -394,6 +394,6 @@ class ErmrestClient (object):
             res = resp.read()
         except:
             et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('Can not cancel job "%s" for object "%s". Error: "%s"' % (job_id, object_url, str(ev)))
+            serviceconfig.logger.error('Can not cancel job "%s" for object "%s://%s%s". Error: "%s"' % (job_id, self.scheme, self.host, url, str(ev)))
             raise
             
