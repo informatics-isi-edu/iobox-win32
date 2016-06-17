@@ -197,7 +197,7 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('WARNING', 'WARNING IOBox', 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.sendMail('NOTICE', 'WARNING IOBox', 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
                 serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s"' % (method, self.scheme, self.host, url))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
@@ -215,7 +215,7 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('WARNING', 'WARNING IOBox: HTTP exception: %d' % resp.status, 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.sendMail('NOTICE', 'WARNING IOBox: HTTP exception: %d' % resp.status, 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
                 serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)

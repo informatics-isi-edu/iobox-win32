@@ -382,6 +382,7 @@ class Workflow(object):
                 webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
+                    serviceconfig.sendMail('WARNING', 'WARNING IOBox', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     continue
                 
                 failure = disposition.get('failure', None)

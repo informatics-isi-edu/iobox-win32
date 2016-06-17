@@ -54,6 +54,7 @@ __LOGLEVEL = {'error': logging.ERROR,
 # Mail Message
 mail_message = ['ERROR',
                 'WARNING',
+                'NOTICE',
                 'INFO']
 
 def load():
