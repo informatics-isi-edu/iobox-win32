@@ -181,6 +181,7 @@ Below is a sample of an configuration file. It:
     "mail_server": "smtp.mail_domain",
     "mail_sender": "IOBox Online Notification <no_reply@isi.edu>",
     "mail_receiver": "mail_id@mail_domain",
+    "mail_message": ["ERROR"],
 	"monitored_dirs": [
 		{
 		    "inbox": "C:\\Users\\your_user_id\\Documents\\iobox\\input",
@@ -305,6 +306,7 @@ The sample is using the following:
    - **mail_server**: the mail server used to send status notifications.
    - **mail_sender**: the sender of the mail notifications.
    - **mail_receiver**: the receiver of the mail notifications.
+   - **mail_message**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
 
 1. Directory parameters:
 
