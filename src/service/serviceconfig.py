@@ -51,6 +51,11 @@ __LOGLEVEL = {'error': logging.ERROR,
               'info': logging.INFO,
               'debug': logging.DEBUG}
 
+# Mail Message
+mail_message = ['ERROR',
+                'WARNING',
+                'INFO']
+
 def load():
     """
     Read the configuration file and initialize the service.
@@ -65,7 +70,7 @@ def load():
     """
     Load configuration file
     """
-    global logger, mail_server, mail_sender, mail_receiver, error_message
+    global logger, mail_server, mail_sender, mail_receiver, error_message, mail_message
     hasLogger = False
     cfg = {}
     if os.path.exists(default_config_filename):
@@ -111,6 +116,7 @@ def load():
     mail_server = cfg.get('mail_server', None)
     mail_sender = cfg.get('mail_sender', None)
     mail_receiver = cfg.get('mail_receiver', None)
+    mail_message = cfg.get('mail_message', mail_message)
     timeout = cfg.get('timeout', 30)
     monitored_dirs = cfg.get('monitored_dirs', None)
     if monitored_dirs:
@@ -123,10 +129,10 @@ def load():
     else:
         return None
     
-def sendMail(subject, text):
-    global logger, mail_server, mail_sender, mail_receiver
+def sendMail(message, subject, text):
+    global logger, mail_server, mail_sender, mail_receiver, mail_message
     
-    if mail_server and mail_sender and mail_receiver:
+    if mail_server and mail_sender and mail_receiver and message in mail_message:
         try:
             msg = MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
             msg['Subject'] = subject

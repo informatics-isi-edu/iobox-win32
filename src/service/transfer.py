@@ -59,7 +59,7 @@ class Workflow(object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Processing exception during retry "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         
     """
     Recover uploading the files.
@@ -74,7 +74,7 @@ class Workflow(object):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
     
     """
     Upload a file.
@@ -197,7 +197,7 @@ class Workflow(object):
                             outputDict.update({'%s%s' % (prefix, name): value})
                 if success == False:
                     serviceconfig.logger.debug("Bad datetime handler.")
-                    serviceconfig.sendMail('FAILURE', 'Bad datetime handler.')
+                    serviceconfig.sendMail('ERROR', 'FAILURE', 'Bad datetime handler.')
                     self.moveFile(self.filename, 'failure', fromDir)
                     complete = False
                     break
@@ -216,7 +216,7 @@ class Workflow(object):
                         if credentials == None:
                             complete = False
                             serviceconfig.logger.debug("Credentials file was not specified.")
-                            serviceconfig.sendMail('FAILURE', 'Credentials file was not specified.')
+                            serviceconfig.sendMail('ERROR', 'FAILURE', 'Credentials file was not specified.')
                             self.moveFile(self.filename, 'failure', fromDir)
                             break
                         try:
@@ -228,13 +228,13 @@ class Workflow(object):
                             else:
                                 complete = False
                                 serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
-                                serviceconfig.sendMail('FAILURE', 'Bad credentials file "%s".' % credentials)
+                                serviceconfig.sendMail('ERROR', 'FAILURE', 'Bad credentials file "%s".' % credentials)
                                 self.moveFile(self.filename, 'failure', fromDir)
                         except:
                             complete = False
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                            serviceconfig.sendMail('FAILURE', 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                            serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                             self.moveFile(self.filename, 'failure', fromDir)
                             break
                         webcli = ErmrestClient(scheme=connection.get('scheme', None), \
@@ -320,7 +320,7 @@ class Workflow(object):
                         resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes)
                         resp.read()
                         success = True
-                        serviceconfig.sendMail('SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))
+                        serviceconfig.sendMail('INFO', 'SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))
                     except ErmrestHTTPException, e:
                         if method == 'POST' and e.status == CONFLICT:
                             """
@@ -361,10 +361,10 @@ class Workflow(object):
                         else:
                             if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                 failure = 'retry'
-                            serviceconfig.sendMail('FAILURE ERMREST', 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
+                            serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
                     except:
                         et, ev, tb = sys.exc_info()
-                        serviceconfig.sendMail('FAILURE ERMREST', 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     if success==False and failure:
                         serviceconfig.logger.debug("failure action: %s" % failure)
                     if success==False:
@@ -410,7 +410,7 @@ class Workflow(object):
                                     if e.retry==True:
                                         failure = 'retry'
                                     success = False
-                                    serviceconfig.sendMail('FAILURE ERMREST', 'ErmrestHTTPException: Can not create namespace "%s"\n. Error: "%s"' % ('/'.join(urls), str(e)))
+                                    serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'ErmrestHTTPException: Can not create namespace "%s"\n. Error: "%s"' % ('/'.join(urls), str(e)))
                                     break
                                 except:
                                     success = False
@@ -421,19 +421,19 @@ class Workflow(object):
                             break
                     else:
                         serviceconfig.logger.debug('Can not upload the file "%s". The namespace "%s" does not exist and the "create_parents" option is not set to "true".' % (self.filename, '/'.join(namespaces)))
-                        serviceconfig.sendMail('FAILURE ERMREST', 'Namespace "%s" does not exist.' % '/'.join(namespaces))
+                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Namespace "%s" does not exist.' % '/'.join(namespaces))
                         complete = False
                         self.moveFile(self.filename, failure, fromDir)
                         break
                 try:
                     job_id, status = webcli.uploadFile(object_url, self.filename, chunk_size)
-                    serviceconfig.sendMail('SUCCEEDED TRANSFER', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
+                    serviceconfig.sendMail('INFO', 'SUCCEEDED TRANSFER', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
                 except:
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     complete = False
                     self.moveFile(self.filename, failure, fromDir)
-                    serviceconfig.sendMail('FAILURE TRANSFER', 'Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
+                    serviceconfig.sendMail('ERROR', 'FAILURE TRANSFER', 'Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     break
         if complete == True:
             self.moveFile(self.filename, 'success', fromDir)
@@ -466,13 +466,13 @@ class Workflow(object):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                 return None
         except:
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            serviceconfig.sendMail('ERROR', 'FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return None
 
     """
@@ -523,7 +523,7 @@ class Workflow(object):
         serviceconfig.logger.info('Moved file: "%s" to the "%s" directory.' % (filename, toDir))
         os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
         time.sleep(1)
-        serviceconfig.sendMail('%s %s' % (subject, os.path.basename(filename)), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
+        serviceconfig.sendMail('INFO', '%s %s' % (subject, os.path.basename(filename)), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
         self.cleanDirectory(fromDir, dirnameParts)
     
     """
