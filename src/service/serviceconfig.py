@@ -133,7 +133,7 @@ def load():
 def sendMail(message, subject, text):
     global logger, mail_server, mail_sender, mail_receiver, mail_message
     
-    if mail_server and mail_sender and mail_receiver and message in mail_message:
+    if mail_server and mail_sender and mail_receiver and (message in mail_message or message=='ANY'):
         try:
             msg = MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
             msg['Subject'] = subject
@@ -152,3 +152,9 @@ def getLogErrorMsg():
     global error_message
 
     return error_message
+
+def getMailMsg():
+    global mail_message
+
+    return mail_message
+

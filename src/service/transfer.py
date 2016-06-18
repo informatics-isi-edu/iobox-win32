@@ -255,6 +255,7 @@ class Workflow(object):
                 Execute an ermrest request.
                 """
                 method = disposition.get('method', None)
+                duplicate_warning = disposition.get('duplicate_warning', False)
                 unique_columns = disposition.get('unique_columns', [])
                 url = disposition.get('url', None) % outputDict
                 webcli = outputDict[disposition.get('webconn', None) % outputDict]
@@ -351,6 +352,8 @@ class Workflow(object):
                                     rowsCount = len(rows)
                                     if rowsCount > 0:
                                         serviceconfig.logger.info('Bypassing the CONFLICT error due to the existence of %d duplicate(s).' % rowsCount)
+                                        if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
+                                            serviceconfig.sendMail('ANY', 'WARNING ERMREST', 'Found duplicate entry in ermrest for the file "%s". The POST CONFLICT error will be ignored.' % (self.filename))
                                         success = True
                             except ErmrestHTTPException, e:
                                 if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
@@ -375,6 +378,7 @@ class Workflow(object):
                 """
                 Upload the file.
                 """
+                duplicate_warning = disposition.get('duplicate_warning', False)
                 url = disposition.get('url', None) % outputDict
                 o = urlparse.urlparse(url)
                 object_url = o.path
@@ -382,7 +386,8 @@ class Workflow(object):
                 webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
-                    serviceconfig.sendMail('WARNING', 'WARNING IOBox', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
+                    if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
+                        serviceconfig.sendMail('ANY', 'WARNING IOBox', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     continue
                 
                 failure = disposition.get('failure', None)
