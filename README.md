@@ -244,20 +244,24 @@ Below is a sample of an configuration file. It:
 						},
 						{
 							"handler": "ermrest",
-							"method": "PUT",
+							"method": "POST",
+							"duplicate_warning": true,
 							"colmap": {
 								"ID": "%(sha256)s",
 								"Slide ID": "%(slideid)s",
 								"Original Filename": "%(basename)s",
 								"MD5": "%(md5sum)s",
 								"File Size": "%(nbytes)d",
-								"Modified Date": "%(last_modified_date)s"
+								"Modified Date": "%(last_modified_date)s",
+								"HTTP URL": null,
+								"Thumbnail": null
 							},
 							"webconn": "foo",
 							"url": "https://foo.org/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
 						},
 						{
 							"handler": "hatrac",
+							"duplicate_warning": true,
     						"chunk_size": 100000000,
 							"webconn": "foo",
 							"url": "https://foo.org/hatrac/%(objname)s",
@@ -341,10 +345,12 @@ The sample is using the following:
      **hatrac**. The parameter **credentials** points to a JSON file that contains 
      the  credential information. The Python dictionary is updated with the key `foo`. 
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
-     specifies the columns that will be updated.
+     specifies the columns that will be updated. The **duplicate_warning** parameter 
+     specifies that duplicates detected at `ermrest` will be notified through the email.
    - **"handler": "hatrac"**: Uploads the file in chunks and create the
      parent namespaces if absent. In case of failure, move the file to
-     the `transfer` directory.
+     the `transfer` directory. The **duplicate_warning** parameter specifies 
+     that duplicates detected at `hatrac` will be notified through the email.
    - **"handler": "ermrest"** with `"method": "PUT"`. The `group_key`
      specifies the columns to identify the entity that will be updated.
      The `target_columns` specifies the columns that will be updated.
