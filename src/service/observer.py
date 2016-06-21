@@ -223,6 +223,7 @@ class Observer(object):
         self.rules = self.monitored_dir.get('rules', None)
         serviceconfig.logger.debug('Monitored directory "%s" initialized' % self.inbox)
         self.workflow = Workflow(observer=self)
+        self.isAlive = True
         
         return self
 
@@ -253,7 +254,19 @@ class Observer(object):
     Start the watcher.
     """
     def start(self):
-        self.isAlive = True
+        """
+        If the service was stopped during the recover process,
+        then delete the stop_service.txt file and exit
+        """
+        if self.isAlive==False:
+            try:
+                time.sleep(1)
+                os.remove(os.path.join(self.inbox, 'stop_service.txt'))
+                print 'Removed stop_service.txt'
+            except:
+                pass
+            return
+                
         serviceconfig.logger.debug('starting...')
         while self.isAlive:
             #
@@ -319,7 +332,6 @@ class Observer(object):
         # sleep maximum 10 seconds such that the Timer can be stopped
         count = timeout / 10
         i = 0
-        self.isAlive = True
         try:
             while self.isAlive:
                 time.sleep(10)
@@ -342,4 +354,4 @@ class Observer(object):
         f = open('%s\\stop_service.txt' % self.inbox, 'w')
         f.close()
         self.isAlive = False
-        
+        self.workflow.isAlive = False

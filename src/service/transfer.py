@@ -26,6 +26,7 @@ class Workflow(object):
         self.retry = observer.retry
         self.inbox = observer.inbox
         self.basicDict = observer.basicDict
+        self.isAlive = True
 
     """
     Get recursively the files of a directory.
@@ -48,11 +49,15 @@ class Workflow(object):
         try:
             retryFiles = self.getFiles(self.retry)
             for filename in retryFiles:
+                if self.isAlive==False:
+                    break
                 serviceconfig.logger.debug('Retrying %s' % filename)
                 self.processFile(filename, 'retry')
                 
             transferFiles = self.getFiles(self.transfer)
             for filename in transferFiles:
+                if self.isAlive==False:
+                    break
                 serviceconfig.logger.debug('Retrying transfer %s' % filename)
                 self.processFile(filename, 'transfer')
         except:
@@ -67,6 +72,8 @@ class Workflow(object):
     def recoverFiles(self):
         inboxFiles = self.getFiles(self.inbox)
         for filename in inboxFiles:
+            if self.isAlive==False:
+                break
             serviceconfig.logger.debug('Recovering %s' % filename)
             try:
                 self.processFile(filename, 'recover')
