@@ -281,6 +281,29 @@ class Workflow(object):
                         except:
                             value = colmap[col]
                         cols.update({col: value})
+                    """
+                    Add the missing columns with NULL values
+                    """
+                    columns_url = self.getTableColumnsURL(self.basicDict['urlPath'](url))
+                    if columns_url != None and webcli != None:
+                        try:
+                            resp = webcli.send_request('GET', '%s/' % (columns_url), headers={'Content-Type': 'application/json'})
+                            rows = json.load(resp)
+                            for row in rows:
+                                if row['name'] not in cols.keys():
+                                    cols.update({row['name']: None})
+                        except ErmrestHTTPException, e:
+                            complete = False
+                            if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
+                                failure = 'retry'
+                        except:
+                            complete = False
+                            et, ev, tb = sys.exc_info()
+                            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                        if complete==False:
+                            self.moveFile(self.filename, failure, fromDir)
+                            break
+
                     body.append(cols)
                     json_body = body
                     body = self.json2csv(body)
@@ -341,7 +364,7 @@ class Workflow(object):
                                     Unique columns are not specified in the ermrest handler.
                                     Get them from the introspection.
                                     """
-                                    unique_url = self.getTableUniqueKeys(url)
+                                    unique_url = self.getTableUniqueKeysURL(url)
                                     if unique_url!=None:
                                         resp = webcli.send_request('GET', '%s/' % (unique_url), headers={'Content-Type': 'application/json'})
                                         rows = json.load(resp)
@@ -583,9 +606,9 @@ class Workflow(object):
         return '&'.join(rows)
         
     """
-    Get the unique keys of the POST request
+    Get the unique keys URL of the POST request
     """
-    def getTableUniqueKeys(self, url):
+    def getTableUniqueKeysURL(self, url):
         ret = None
         index = url.find('/entity/')
         if index > 0:
@@ -599,6 +622,25 @@ class Workflow(object):
                 schema = entity[0]
                 table = entity[1]
                 ret = '%s/schema/%s/table/%s/key' % (url_prefix, schema, table)
+        return ret
+        
+    """
+    Get the columns URL of the table referred in the POST request
+    """
+    def getTableColumnsURL(self, url):
+        ret = None
+        index = url.find('/entity/')
+        if index > 0:
+            url_prefix = url[0:index]
+            index1 = index + len('/entity/')
+            index2 = url.find('?')
+            if index2 < 0:
+                index2 = len(url)
+            entity = url[index1:index2].split(':')
+            if len(entity)==2:
+                schema = entity[0]
+                table = entity[1]
+                ret = '%s/schema/%s/table/%s/column' % (url_prefix, schema, table)
         return ret
         
 def create_uri_friendly_file_path(filename):
