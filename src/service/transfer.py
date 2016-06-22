@@ -106,6 +106,7 @@ class Workflow(object):
                 self.moveFile(filename, 'failure', fromDir)
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
+            serviceconfig.sendMail('ERROR', 'FAILURE', 'No rule found for file %s' % filename)
             self.moveFile(filename, 'failure', fromDir)
     
     """
