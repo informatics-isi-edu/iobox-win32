@@ -136,7 +136,7 @@ def sendMail(message, subject, text):
     if mail_server and mail_sender and mail_receiver and (message in mail_message or message=='ANY'):
         try:
             msg = MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
-            msg['Subject'] = subject
+            msg['Subject'] = 'IOBox %s' % subject
             msg['From'] = mail_sender
             msg['To'] = mail_receiver
             s = smtplib.SMTP(mail_server)

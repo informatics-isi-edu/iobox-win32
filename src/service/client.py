@@ -132,7 +132,7 @@ class ErmrestClient (object):
             """
             auth = base64.encodestring('%s:%s' % (self.username, self.password)).replace('\n', '')
             headers = dict(Authorization='Basic %s' % auth)
-            resp = self.send_request('GET', '/service/nexus/goauth/token?grant_type=client_credentials', '', headers)
+            resp = self.send_request('GET', '/service/nexus/goauth/token?grant_type=client_credentials', '', headers, webapp='')
             goauth = json.loads(resp.read())
             self.access_token = goauth['access_token']
             self.header = dict(Authorization='Globus-Goauthtoken %s' % self.access_token)
@@ -140,7 +140,7 @@ class ErmrestClient (object):
         else:
             headers = {}
             headers["Content-Type"] = "application/x-www-form-urlencoded"
-            resp = self.send_request("POST", "/ermrest/authn/session", "username=%s&password=%s" % (self.username, self.password), headers)
+            resp = self.send_request("POST", "/ermrest/authn/session", "username=%s&password=%s" % (self.username, self.password), headers, webapp='')
             self.header = dict(Cookie=resp.getheader("set-cookie"))
             resp.read()
         
@@ -164,7 +164,7 @@ class ErmrestClient (object):
     """
     Send a request.
     """
-    def send_request(self, method, url, body='', headers={}, sendData=False, ignoreErrorCodes=[]):
+    def send_request(self, method, url, body='', headers={}, sendData=False, ignoreErrorCodes=[], webapp='HATRAC'):
         try:
             if self.header:
                 headers.update(self.header)
@@ -197,7 +197,7 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('NOTICE', 'WARNING IOBox', 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.sendMail('NOTICE', '%s WARNING: The HTTPSConnection has been restarted' % webapp, 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
                 serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s"' % (method, self.scheme, self.host, url))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
@@ -215,7 +215,7 @@ class ErmrestClient (object):
                 """
                 self.close()
                 self.connect()
-                serviceconfig.sendMail('NOTICE', 'WARNING IOBox: HTTP exception: %d' % resp.status, 'The HTTPSConnection has been restarted on "%s://%s".\n' % (self.scheme, self.host))
+                serviceconfig.sendMail('NOTICE', '%s WARNING: The HTTPSConnection has been restarted' % webapp, 'HTTP exception: %d.\nThe HTTPSConnection has been restarted on "%s://%s".\n' % (resp.status, self.scheme, self.host))
                 serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
@@ -241,7 +241,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got HTTP exception: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('ERROR', 'FAILURE HTTP', 'Error generated during the HTTP request: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
+            serviceconfig.sendMail('ERROR', '%s FAILURE: Unexpected Exception' % webapp, 'Error generated during the HTTP request: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
             raise
 
     """

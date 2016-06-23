@@ -64,7 +64,7 @@ class Workflow(object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Processing exception during retry "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            serviceconfig.sendMail('ERROR', 'Retry Processing FAILURE: %s' % str(et), 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
         
     """
     Recover uploading the files.
@@ -81,7 +81,7 @@ class Workflow(object):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during recovering "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('ERROR', 'FAILURE %s' % f, 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'Recover Processing FAILURE: %s' % str(et), 'Exception generated during processing the file "%s":\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
     
     """
     Upload a file.
@@ -106,7 +106,7 @@ class Workflow(object):
                 self.moveFile(filename, 'failure', fromDir)
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
-            serviceconfig.sendMail('ERROR', 'FAILURE', 'No rule found for file %s' % filename)
+            serviceconfig.sendMail('ERROR', 'File Processing FAILURE: No rule found', 'No rule found for file %s' % filename)
             self.moveFile(filename, 'failure', fromDir)
     
     """
@@ -197,15 +197,19 @@ class Workflow(object):
                     input_date_string = input.get('date_string', None)
                     if input_date_string != None:
                         input_format = input.get('format', '%Y-%m-%d %H:%M:%S.%f')
-                        input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
-                        success = True
-                        for name in output.keys():
-                            output_format = output[name]
-                            value = input_datetime.strftime(output_format)
-                            outputDict.update({'%s%s' % (prefix, name): value})
+                        try:
+                            input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
+                            for name in output.keys():
+                                output_format = output[name]
+                                value = input_datetime.strftime(output_format)
+                                outputDict.update({'%s%s' % (prefix, name): value})
+                            success = True
+                        except:
+                            et, ev, tb = sys.exc_info()
+                            serviceconfig.logger.error('Bad datetime handler: "%s"' % str(ev))
+                            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                            serviceconfig.sendMail('ERROR', 'Handler Processing FAILURE: Bad datetime handler', 'Exception generated during processing the file "%s":\n%s\n%s' % (self.filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                 if success == False:
-                    serviceconfig.logger.debug("Bad datetime handler.")
-                    serviceconfig.sendMail('ERROR', 'FAILURE', 'Bad datetime handler.')
                     self.moveFile(self.filename, 'failure', fromDir)
                     complete = False
                     break
@@ -224,7 +228,7 @@ class Workflow(object):
                         if credentials == None:
                             complete = False
                             serviceconfig.logger.debug("Credentials file was not specified.")
-                            serviceconfig.sendMail('ERROR', 'FAILURE', 'Credentials file was not specified.')
+                            serviceconfig.sendMail('ERROR', 'Connection FAILURE: No credentials file', 'Credentials file was not specified.')
                             self.moveFile(self.filename, 'failure', fromDir)
                             break
                         try:
@@ -236,13 +240,13 @@ class Workflow(object):
                             else:
                                 complete = False
                                 serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
-                                serviceconfig.sendMail('ERROR', 'FAILURE', 'Bad credentials file "%s".' % credentials)
+                                serviceconfig.sendMail('ERROR', 'Connection FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
                                 self.moveFile(self.filename, 'failure', fromDir)
                         except:
                             complete = False
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                            serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                            serviceconfig.sendMail('ERROR', 'Connection FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                             self.moveFile(self.filename, 'failure', fromDir)
                             break
                         webcli = ErmrestClient(scheme=connection.get('scheme', None), \
@@ -288,7 +292,7 @@ class Workflow(object):
                     columns_url = self.getTableColumnsURL(self.basicDict['urlPath'](url))
                     if columns_url != None and webcli != None:
                         try:
-                            resp = webcli.send_request('GET', '%s/' % (columns_url), headers={'Content-Type': 'application/json'})
+                            resp = webcli.send_request('GET', '%s/' % (columns_url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                             rows = json.load(resp)
                             for row in rows:
                                 if row['name'] not in cols.keys():
@@ -344,7 +348,7 @@ class Workflow(object):
                     be stored in the outputDict
                     """
                     try:
-                        resp = webcli.send_request('GET', self.basicDict['urlPath'](url), headers={'Content-Type': 'application/json'})
+                        resp = webcli.send_request('GET', self.basicDict['urlPath'](url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                         rows = json.load(resp)
                         if len(rows) == 1:
                             row = rows[0]
@@ -357,22 +361,25 @@ class Workflow(object):
                                 outputDict.update({'encode.value.%s' % col: value})
                         else:
                             serviceconfig.logger.debug('GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
-                            serviceconfig.sendMail('ERROR', 'FAILURE', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
+                            serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: Invalid number of rows returned', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
                             complete = False
                     except ErmrestHTTPException, e:
                         complete = False
                         if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                             failure = 'retry'
-                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Error generated during the %s request "%s" for the file "%s":\n%s' % (method, url, self.filename, str(e)))
+                        serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: %d' % e.status, 'Error generated during the %s request "%s" for the file "%s":\n%s' % (method, url, self.filename, str(e)))
                     except:
                         complete = False
                         et, ev, tb = sys.exc_info()
                         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                        serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: %s' % str(et), 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     if complete==False:
                         self.moveFile(self.filename, failure, fromDir)
                         break
-                if webcli:
+                    else:
+                        serviceconfig.sendMail('INFO', 'ERMREST GET SUCCESS', '%s: %s' % (method, url))
+                        
+                if webcli and (method == 'POST' or method == 'PUT'):
                     """
                     Send the ermrest request
                     """
@@ -385,10 +392,10 @@ class Workflow(object):
                             body = json.dumps(body)
                         if method == 'POST':
                             ignoreErrorCodes = []
-                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes)
+                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes, webapp='ERMREST')
                         resp.read()
                         success = True
-                        serviceconfig.sendMail('INFO', 'SUCCEEDED ERMREST', '%s: %s\n%s' % (method, url, body))
+                        serviceconfig.sendMail('INFO', 'ERMREST %s SUCCESS' % method, '%s: %s\n%s' % (method, url, body))
                     except ErmrestHTTPException, e:
                         if method == 'POST' and e.status == CONFLICT:
                             """
@@ -403,7 +410,7 @@ class Workflow(object):
                                     """
                                     unique_url = self.getTableUniqueKeysURL(url)
                                     if unique_url!=None:
-                                        resp = webcli.send_request('GET', '%s/' % (unique_url), headers={'Content-Type': 'application/json'})
+                                        resp = webcli.send_request('GET', '%s/' % (unique_url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                                         rows = json.load(resp)
                                         for row in rows:
                                             unique_columns.extend(row['unique_columns'])
@@ -414,13 +421,13 @@ class Workflow(object):
                                     index = url.find('?')
                                     if index > 0:
                                         url = url[0:index]
-                                    resp = webcli.send_request('GET', '%s/%s' % (url, self.getBodyPredicate(unique_columns, json_body)), headers={'Content-Type': 'application/json'})
+                                    resp = webcli.send_request('GET', '%s/%s' % (url, self.getBodyPredicate(unique_columns, json_body)), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                                     rows = json.load(resp)
                                     rowsCount = len(rows)
                                     if rowsCount > 0:
                                         serviceconfig.logger.info('Bypassing the CONFLICT error due to the existence of %d duplicate(s).' % rowsCount)
                                         if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
-                                            serviceconfig.sendMail('ANY', 'WARNING ERMREST', 'Found duplicate entry in ermrest for the file "%s". The POST CONFLICT error will be ignored.' % (self.filename))
+                                            serviceconfig.sendMail('ANY', 'ERMREST POST WARNING: Duplicate found', 'Found duplicate entry in ermrest for the file "%s". The POST CONFLICT error will be ignored.' % (self.filename))
                                         success = True
                             except ErmrestHTTPException, e:
                                 if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
@@ -431,10 +438,10 @@ class Workflow(object):
                         else:
                             if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                 failure = 'retry'
-                            serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
+                            serviceconfig.sendMail('ERROR', 'ERMREST FAILURE %d' % e.status, 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
                     except:
                         et, ev, tb = sys.exc_info()
-                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: %s' % str(et), 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                     if success==False and failure:
                         serviceconfig.logger.debug("failure action: %s" % failure)
                     if success==False:
@@ -454,7 +461,7 @@ class Workflow(object):
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
-                        serviceconfig.sendMail('ANY', 'WARNING IOBox', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
+                        serviceconfig.sendMail('ANY', 'HATRAC WARNING: Duplicate found', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     continue
                 
                 failure = disposition.get('failure', None)
@@ -483,7 +490,7 @@ class Workflow(object):
                                     if e.retry==True:
                                         failure = 'retry'
                                     success = False
-                                    serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'ErmrestHTTPException: Can not create namespace "%s"\n. Error: "%s"' % ('/'.join(urls), str(e)))
+                                    serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: Can not create namespace', 'ErmrestHTTPException: Can not create namespace "%s"\n. Error: "%s"' % ('/'.join(urls), str(e)))
                                     break
                                 except:
                                     success = False
@@ -494,19 +501,19 @@ class Workflow(object):
                             break
                     else:
                         serviceconfig.logger.debug('Can not upload the file "%s". The namespace "%s" does not exist and the "create_parents" option is not set to "true".' % (self.filename, '/'.join(namespaces)))
-                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Namespace "%s" does not exist.' % '/'.join(namespaces))
+                        serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: Namespace does not exist', 'Namespace "%s" does not exist and the option "create_parents" is not set to "true".' % '/'.join(namespaces))
                         complete = False
                         self.moveFile(self.filename, failure, fromDir)
                         break
                 try:
                     job_id, status = webcli.uploadFile(object_url, self.filename, chunk_size)
-                    serviceconfig.sendMail('INFO', 'SUCCEEDED TRANSFER', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
+                    serviceconfig.sendMail('INFO', 'HATRAC SUCCESS', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
                 except:
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     complete = False
                     self.moveFile(self.filename, failure, fromDir)
-                    serviceconfig.sendMail('ERROR', 'FAILURE TRANSFER', 'Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
+                    serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: %s' % str(et), 'Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     break
         if complete == True:
             self.moveFile(self.filename, 'success', fromDir)
@@ -539,13 +546,13 @@ class Workflow(object):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('ERROR', 'FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                 return None
         except:
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('ERROR', 'FAILURE %s' % file, 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             return None
 
     """
@@ -596,7 +603,7 @@ class Workflow(object):
         serviceconfig.logger.info('Moved file: "%s" to the "%s" directory.' % (filename, toDir))
         os.rename(filename, '%s%s%s' % (toDir, os.sep, os.path.basename(filename)))
         time.sleep(1)
-        serviceconfig.sendMail('INFO', '%s %s' % (subject, os.path.basename(filename)), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
+        serviceconfig.sendMail('INFO', 'File Processing %s' % (subject), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
         self.cleanDirectory(fromDir, dirnameParts)
     
     """
