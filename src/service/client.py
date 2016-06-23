@@ -228,11 +228,12 @@ class ErmrestClient (object):
                 resp = self.webconn.getresponse()
                 serviceconfig.logger.debug('Response: %d' % resp.status)
             if resp.status not in [OK, CREATED, ACCEPTED, NO_CONTENT]:
+                errmsg = resp.read()
                 if resp.status not in ignoreErrorCodes:
-                    serviceconfig.logger.error('Error response: method="%s", url="%s://%s%s", status=%i, error: %s' % (method, self.scheme, self.host, url, resp.status, resp.read()))
+                    serviceconfig.logger.error('Error response: method="%s", url="%s://%s%s", status=%i, error: %s' % (method, self.scheme, self.host, url, resp.status, errmsg))
                 else:
-                    serviceconfig.logger.error('Error response: %s' % (resp.read()))
-                raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, resp.read()), resp.status, retry)
+                    serviceconfig.logger.error('Error response: %s' % (errmsg))
+                raise ErmrestHTTPException("Error response (%i) received: %s" % (resp.status, errmsg), resp.status, retry)
             return resp
         except ErmrestHTTPException:
             raise

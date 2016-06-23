@@ -336,6 +336,42 @@ class Workflow(object):
                     body.append(cols)
                     body = self.json2csv(body)
                     serviceconfig.logger.debug("PUT body: %s" % body)
+                elif method == 'GET':
+                    """
+                    The GET request should return only 1 row.
+                    An error should be reported if it returns more then 1 row.
+                    The column names and values from the returned row should
+                    be stored in the outputDict
+                    """
+                    try:
+                        resp = webcli.send_request('GET', self.basicDict['urlPath'](url), headers={'Content-Type': 'application/json'})
+                        rows = json.load(resp)
+                        if len(rows) == 1:
+                            row = rows[0]
+                            for col in row.keys():
+                                outputDict.update({col: row[col]})
+                                outputDict.update({'encode.%s' % col: self.basicDict['urlQuote'](col, safe='')})
+                                value = row[col]
+                                if value != None:
+                                    value = self.basicDict['urlQuote'](value, safe='')
+                                outputDict.update({'encode.value.%s' % col: value})
+                        else:
+                            serviceconfig.logger.debug('GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
+                            serviceconfig.sendMail('ERROR', 'FAILURE', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
+                            complete = False
+                    except ErmrestHTTPException, e:
+                        complete = False
+                        if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
+                            failure = 'retry'
+                        serviceconfig.sendMail('ERROR', 'FAILURE ERMREST', 'Error generated during the %s request "%s" for the file "%s":\n%s' % (method, url, self.filename, str(e)))
+                    except:
+                        complete = False
+                        et, ev, tb = sys.exc_info()
+                        serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                        serviceconfig.sendMail('ERROR', 'FAILURE', 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                    if complete==False:
+                        self.moveFile(self.filename, failure, fromDir)
+                        break
                 if webcli:
                     """
                     Send the ermrest request
