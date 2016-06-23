@@ -270,12 +270,19 @@ Below is a sample of an configuration file. It:
 						},
 						{
 							"handler": "ermrest",
+							"method": "GET",
+							"webconn": "foo",
+							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:Experiment/Disambiguator=H/Probe"
+						},
+						{
+							"handler": "ermrest",
 							"method": "PUT",
 							"group_key": {
 								"ID": "%(sha256)s"
 							},
 							"target_columns": {
-								"Filename": "%(sha256)s.czi"
+								"Filename": "%(sha256)s.czi",
+								"Probe": "%(Probe)s"
 							},
 							"webconn": "foo",
 							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s"
@@ -351,9 +358,15 @@ The sample is using the following:
      parent namespaces if absent. In case of failure, move the file to
      the `transfer` directory. The **duplicate_warning** parameter specifies 
      that duplicates detected at `hatrac` will be notified through the email.
+   - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
+     exactly one row; an error is reported otherwise. The Python dictionary is 
+     updated with the columns and values returned by the row.
    - **"handler": "ermrest"** with `"method": "PUT"`. The `group_key`
      specifies the columns to identify the entity that will be updated.
-     The `target_columns` specifies the columns that will be updated.
+     The `target_columns` specifies the columns that will be updated. The 
+     `Probe` attribute returned from the previous **ermrest** handler with 
+     the `GET` method is used here to populate the `Probe` column of the 
+     `Scan` table.
 
 ## Troubleshooting
 
