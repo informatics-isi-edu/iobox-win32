@@ -351,11 +351,11 @@ The sample is using the following:
      - **schema**: the schema where the report data is stored.
      - **table**: the table where the report data is stored. The table should have the columns specified in `colmap`. In addition, it can have columns with default values (for example a column of type `serial`).
      - **colmap**: the map between the report columns and their real names. The report table should have the following columns:
-       - **timestamp**: a column of `timestamptz` type to store the activity creation time
-       - **filename**: a column of `text` type to store the involved file name
-       - **status**: a column of `text` type to store the activity result. It has values like `success`, `failure`, `duplicate` and `retry`.
-       - **reason**: a column of `text` type to store the reason of a failure.
-       - **reported**: a column of boolean type to mark if the data was reported or not.
+         - **timestamp**: a column of `timestamptz` type to store the activity creation time
+         - **filename**: a column of `text` type to store the involved file name
+         - **status**: a column of `text` type to store the activity result. It has values like `success`, `failure`, `duplicate` and `retry`.
+         - **reason**: a column of `text` type to store the reason of a failure.
+         - **reported**: a column of boolean type to mark if the data was reported or not.
 
 1. Directory parameters:
 
