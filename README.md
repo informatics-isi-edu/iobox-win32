@@ -355,7 +355,7 @@ The sample is using the following:
          - **filename**: a column of `text` type to store the involved file name
          - **status**: a column of `text` type to store the activity result. It has values like `success`, `failure`, `duplicate` and `retry`.
          - **reason**: a column of `text` type to store the reason of a failure.
-         - **reported**: a column of boolean type to mark if the data was reported or not.
+         - **reported**: a column of `boolean` type to mark if the data was reported or not.
 
 1. Directory parameters:
 
