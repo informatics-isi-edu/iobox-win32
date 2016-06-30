@@ -172,6 +172,7 @@ Below is a sample of an configuration file. It:
 1. Creates or updates an entity with the `ID`, `Slide ID`, `Original Filename`, `MD5`, `File Size` and the `Modified Date`.
 1. Uploads in **hatrac** the file.
 1. Updates the entry with the `Filename` as its `sha256`.
+1. Provides daily reports.
 
 ```
 {
@@ -182,6 +183,29 @@ Below is a sample of an configuration file. It:
     "mail_sender": "IOBox Online Notification <no_reply@isi.edu>",
     "mail_receiver": "mail_id@mail_domain",
     "mail_message": ["ERROR"],
+    "report": {
+    	"output": "C:\\Users\\your_user_id\\Documents\\iobox\\reports",
+    	"prefix": "foo",
+		"connection": {
+			"foo": {
+				"scheme": "https",
+				"host": "foo.org",
+				"use_goauth": true,
+				"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
+			}
+		},
+    	"actions": ["success", "failure", "duplicate", "retry"],
+    	"catalog": 1,
+    	"schema": "Report",
+    	"table": "Report",
+    	"colmap": {
+    		"timestamp": "Created",
+    		"filename": "File Name",
+    		"status": "Action",
+    		"reason": "Reason",
+    		"reported": "Notified"
+		}
+    },
 	"monitored_dirs": [
 		{
 		    "inbox": "C:\\Users\\your_user_id\\Documents\\iobox\\input",
@@ -318,6 +342,20 @@ The sample is using the following:
    - **mail_sender**: the sender of the mail notifications.
    - **mail_receiver**: the receiver of the mail notifications.
    - **mail_message**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
+   - **report**: if present, it should specify that daily activity reports should be submitted by email. Its structure consists of:
+     - **output**: the directory where the daily reports are generated
+     - **prefix**: the prefix of the report file. The default is `Report`. The report file names follow the pattern `<prefix>.YYYY-MM-DD.csv`, where `YYYY-MM-DD` is its creation date.
+     - **connection**: defines the Web connection to be used for creating reports. The parameter **credentials** points to a JSON file that contains the  credential information.
+     - **actions**: an array with the actions to be reported. The default is `["success", "failure", "duplicate", "retry"]`.
+     - **catalog**: the catalog where the report data is stored. The default is `1`.
+     - **schema**: the schema where the report data is stored.
+     - **table**: the table where the report data is stored. The table should have the columns specified in `colmap`. In addition, it can have columns with default values (for example a column of type `serial`).
+     - **colmap**: the map between the report columns and their real names. The report table should have the following columns:
+       - **timestamp**: a column of `timestamptz` type to store the activity creation time
+       - **filename**: a column of `text` type to store the involved file name
+       - **status**: a column of `text` type to store the activity result. It has values like `success`, `failure`, `duplicate` and `retry`.
+       - **reason**: a column of `text` type to store the reason of a failure.
+       - **reported**: a column of boolean type to mark if the data was reported or not.
 
 1. Directory parameters:
 
