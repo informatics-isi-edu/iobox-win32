@@ -260,7 +260,7 @@ Below is a sample of an configuration file. It:
 						{
 							"handler": "ermrest",
 							"method": "POST",
-							"duplicate_warning": true,
+							"warn_on_duplicates": true,
 							"colmap": {
 								"ID": "%(sha256)s",
 								"Slide ID": "%(slideid)s",
@@ -276,7 +276,7 @@ Below is a sample of an configuration file. It:
 						},
 						{
 							"handler": "hatrac",
-							"duplicate_warning": true,
+							"warn_on_duplicates": true,
     						"chunk_size": 100000000,
 							"webconn": "foo",
 							"url": "https://foo.org/hatrac/%(objname)s",
@@ -382,11 +382,11 @@ The sample is using the following:
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
-     specifies the columns that will be updated. The **duplicate_warning** parameter 
+     specifies the columns that will be updated. The **warn_on_duplicates** parameter 
      specifies that duplicates detected at `ermrest` will be notified through the email.
    - **"handler": "hatrac"**: Uploads the file in chunks and create the
      parent namespaces if absent. In case of failure, move the file to
-     the `transfer` directory. The **duplicate_warning** parameter specifies 
+     the `transfer` directory. The **warn_on_duplicates** parameter specifies 
      that duplicates detected at `hatrac` will be notified through the email.
    - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
      exactly one row; an error is reported otherwise. The Python dictionary is 
