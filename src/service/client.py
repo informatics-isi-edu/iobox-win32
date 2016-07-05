@@ -109,7 +109,6 @@ class ErmrestClient (object):
         self.scheme = kwargs.get('scheme', None)
         self.host = kwargs.get("host", None)
         self.port = kwargs.get("port", None)
-        self.use_goauth = kwargs.get("use_goauth", False)
         self.username = kwargs.get("username", None)
         self.password = kwargs.get("password", None)
         self.cookie = kwargs.get("cookie", None)
@@ -127,7 +126,7 @@ class ErmrestClient (object):
         else:
             raise ValueError('Scheme %s is not supported.' % self.scheme)
 
-        if self.use_goauth:
+        if self.cookie:
             self.header = {'Cookie': self.cookie}
             """
             auth = base64.encodestring('%s:%s' % (self.username, self.password)).replace('\n', '')

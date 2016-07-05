@@ -190,7 +190,6 @@ Below is a sample of an configuration file. It:
 			"foo": {
 				"scheme": "https",
 				"host": "foo.org",
-				"use_goauth": true,
 				"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
 			}
 		},
@@ -261,7 +260,6 @@ Below is a sample of an configuration file. It:
 								"foo": {
 									"scheme": "https",
 									"host": "foo.org",
-									"use_goauth": true,
 									"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
 								}
 							}

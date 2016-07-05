@@ -269,7 +269,6 @@ class Reporter(object):
                     webcli = ErmrestClient(scheme=connection.get('scheme', None), \
                                            host=connection.get("host", None), \
                                            port=connection.get("port", None), \
-                                           use_goauth=connection.get("use_goauth", False), \
                                            username=connection.get("username", None), \
                                            password=connection.get("password", None), \
                                            cookie=connection.get("cookie", None), \
