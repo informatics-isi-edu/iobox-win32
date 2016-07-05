@@ -226,56 +226,6 @@ class Workflow(object):
                     complete = False
                     break
                     
-            elif disposition['handler'] == 'webconn':
-                """
-                Add Web Client connections.
-                """
-                connections = disposition['connections']
-                prefix = disposition.get('prefix', '') % outputDict
-                for key in connections.keys():
-                    webcli = self.clients.get('%s%s' % (prefix, key), None)
-                    if webcli == None:
-                        connection = connections[key]
-                        credentials = connection.get('credentials', None)
-                        if credentials == None:
-                            complete = False
-                            serviceconfig.logger.debug("Credentials file was not specified.")
-                            serviceconfig.sendMail('ERROR', 'Connection FAILURE: No credentials file', 'Credentials file was not specified.')
-                            self.reportAction(self.filename, 'failure', 'No credentials file')
-                            self.moveFile(self.filename, 'failure', fromDir)
-                            break
-                        try:
-                            if os.path.exists(credentials) and os.path.isfile(credentials):
-                                f = open(credentials, 'r')
-                                cfg = json.load(f)
-                                for credential in cfg.keys():
-                                    connection.update({'%s' % credential: cfg.get(credential)})
-                            else:
-                                complete = False
-                                serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
-                                serviceconfig.sendMail('ERROR', 'Connection FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
-                                self.reportAction(self.filename, 'failure', 'Bad credentials file')
-                                self.moveFile(self.filename, 'failure', fromDir)
-                        except:
-                            complete = False
-                            et, ev, tb = sys.exc_info()
-                            serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                            serviceconfig.sendMail('ERROR', 'Connection FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                            self.reportAction(self.filename, 'failure', str(et))
-                            self.moveFile(self.filename, 'failure', fromDir)
-                            break
-                        webcli = ErmrestClient(scheme=connection.get('scheme', None), \
-                                               host=connection.get("host", None), \
-                                               port=connection.get("port", None), \
-                                               username=connection.get("username", None), \
-                                               password=connection.get("password", None), \
-                                               cookie=connection.get("cookie", None), \
-                                               basicDict=self.basicDict)
-                        webcli.connect()
-                        self.clients.update({'%s%s' % (prefix, key): webcli})
-                    outputDict.update({'%s%s' % (prefix, key): webcli})
-                if complete == False:
-                    break
             elif disposition['handler'] == 'ermrest':
                 """
                 Execute an ermrest request.
@@ -284,8 +234,18 @@ class Workflow(object):
                 duplicate_warning = disposition.get('duplicate_warning', False)
                 unique_columns = disposition.get('unique_columns', [])
                 url = disposition.get('url', None) % outputDict
-                webcli = outputDict[disposition.get('webconn', None) % outputDict]
                 failure = disposition.get('failure', None)
+                webcli = None
+                webconn = disposition.get('webconn', None)
+                if webconn != None:
+                    webcli = self.clients.get(webconn, None)
+                if webcli == None:
+                    serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: No Web Connection.', 'Web Connection for ERMREST does not exist.')
+                    self.reportAction(self.filename, 'failure', 'Web Connection for ERMREST does not exist')
+                    complete = False
+                    self.moveFile(self.filename, failure, fromDir)
+                    break
+                    
                 body = []
                 ignoreErrorCodes = []
                 if method == 'POST' or method == 'PUT' and disposition.get('colmap', None) != None:
@@ -486,7 +446,18 @@ class Workflow(object):
                 o = urlparse.urlparse(url)
                 object_url = o.path
                 chunk_size = disposition.get('chunk_size', 100000000)
-                webcli = outputDict[disposition.get('webconn', None) % outputDict]
+                failure = disposition.get('failure', None)
+                webcli = None
+                webconn = disposition.get('webconn', None)
+                if webconn != None:
+                    webcli = self.clients.get(webconn, None)
+                if webcli == None:
+                    serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: No Web Connection.', 'Web Connection for HATRAC does not exist.')
+                    self.reportAction(self.filename, 'failure', 'Web Connection for HATRAC does not exist')
+                    complete = False
+                    self.moveFile(self.filename, failure, fromDir)
+                    break
+                    
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                     if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
@@ -494,7 +465,6 @@ class Workflow(object):
                         self.reportAction(self.filename, 'duplicate', 'HATRAC Duplicate')
                     continue
                 
-                failure = disposition.get('failure', None)
                 create_parents = disposition.get('create_parents', False)
                 pathes = o.path.split('/')[:-1]
                 namespaces = pathes[2:]

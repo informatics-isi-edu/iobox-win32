@@ -183,16 +183,17 @@ Below is a sample of an configuration file. It:
     "mail_sender": "IOBox Online Notification <no_reply@isi.edu>",
     "mail_receiver": "mail_id@mail_domain",
     "mail_message": ["ERROR"],
+	"connections": {
+		"foo": {
+			"scheme": "https",
+			"host": "foo.org",
+			"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
+		}
+	},
     "report": {
     	"output": "C:\\Users\\your_user_id\\Documents\\iobox\\reports",
     	"prefix": "foo",
-		"connection": {
-			"foo": {
-				"scheme": "https",
-				"host": "foo.org",
-				"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
-			}
-		},
+		"webconn": "foo",
     	"actions": ["success", "failure", "duplicate", "retry"],
     	"catalog": 1,
     	"schema": "Report",
@@ -252,16 +253,6 @@ Below is a sample of an configuration file. It:
 							"handler": "templates",
 							"output": {
 								"objname": "%(encode.schema)s/%(encode.slideid)s/%(encode.sha256)s.czi"
-							}
-						},
-						{
-							"handler": "webconn",
-							"connections": {
-								"foo": {
-									"scheme": "https",
-									"host": "foo.org",
-									"credentials": "C:\\Users\\your_user_id\\Documents\\iobox\\config\\credentials.json"
-								}
 							}
 						},
 						{
@@ -340,6 +331,9 @@ The sample is using the following:
    - **mail_sender**: the sender of the mail notifications.
    - **mail_receiver**: the receiver of the mail notifications.
    - **mail_message**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
+   - **connections**: defines the Web connections to be used by the **ermrest** and **hatrac** handlers. 
+     The connection is identified by a name that might be referred in those handlers. The parameter **credentials** points to a JSON file that contains 
+     the  credential information. 
    - **report**: if present, it should specify that daily activity reports should be submitted by email. Its structure consists of:
      - **output**: the directory where the daily reports are generated
      - **prefix**: the prefix of the report file. The default is `Report`. The report file names follow the pattern `<prefix>.YYYY-MM-DD.csv`, where `YYYY-MM-DD` is its creation date.
@@ -384,9 +378,6 @@ The sample is using the following:
      encode.sha256, encode.schema and encode.table`.
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
-   - **"handler": "webconn"**: defines the Web connection to be used by **ermrest** and
-     **hatrac**. The parameter **credentials** points to a JSON file that contains 
-     the  credential information. The Python dictionary is updated with the key `foo`. 
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
      specifies the columns that will be updated. The **duplicate_warning** parameter 
      specifies that duplicates detected at `ermrest` will be notified through the email.

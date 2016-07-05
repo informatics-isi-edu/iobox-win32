@@ -56,6 +56,7 @@ class ObserverManager(object):
         self.timeout = kwargs.get("timeout")
         self.monitored_dirs = kwargs.get("monitored_dirs")
         self.report = kwargs.get("report")
+        self.connections = kwargs.get("connections")
         self.clients = dict()
         self.observers = []
         self.timer = []
@@ -73,6 +74,40 @@ class ObserverManager(object):
     Load the observers.
     """
     def load(self):
+        if self.connections == None:
+            return None
+        for key in self.connections.keys():
+            connection = self.connections[key]
+            credentials = connection.get('credentials', None)
+            if credentials == None:
+                serviceconfig.logger.debug("Credentials file for reports was not specified.")
+                serviceconfig.sendMail('ERROR', 'Report FAILURE: No credentials file', 'Credentials file was not specified.')
+                return None
+            try:
+                if os.path.exists(credentials) and os.path.isfile(credentials):
+                    f = open(credentials, 'r')
+                    cfg = json.load(f)
+                    for credential in cfg.keys():
+                        connection.update({'%s' % credential: cfg.get(credential)})
+                    webcli = ErmrestClient(scheme=connection.get('scheme', None), \
+                                           host=connection.get("host", None), \
+                                           port=connection.get("port", None), \
+                                           username=connection.get("username", None), \
+                                           password=connection.get("password", None), \
+                                           cookie=connection.get("cookie", None), \
+                                           basicDict=self.basicDict)
+                    webcli.connect()
+                    self.clients.update({'%s' % (key): webcli})
+                else:
+                    serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
+                    serviceconfig.sendMail('ERROR', 'Report FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
+                    return None
+            except:
+                et, ev, tb = sys.exc_info()
+                serviceconfig.logger.debug('Exception generated during reading the Report credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'Report FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                return None
+            
         self.reporter = None
         if self.report != None:
             self.reporter = Reporter(observers=self, \
@@ -246,45 +281,16 @@ class Reporter(object):
                 serviceconfig.logger.error('Report column "%s" must be provided.' % col)
                 serviceconfig.sendMail('ERROR', 'Report FAILURE: Column not provided', 'Report column "%s" must be provided.' % col)
                 return False
-        self.connection = self.report.get('connection', None)
-        if self.connection == None:
+        self.webconn = self.report.get('webconn', None)
+        if self.webconn == None:
             serviceconfig.logger.error('Connection for the reports must be given.')
             serviceconfig.sendMail('ERROR', 'Report FAILURE: HTTP connection not given', 'Connection for the reports must be given.')
             return False
-        key = self.connection.keys()[0]
-        webcli = self.clients.get('%s' % (key), None)
-        if webcli == None:
-            connection = self.connection[key]
-            credentials = connection.get('credentials', None)
-            if credentials == None:
-                serviceconfig.logger.debug("Credentials file for reports was not specified.")
-                serviceconfig.sendMail('ERROR', 'Report FAILURE: No credentials file', 'Credentials file was not specified.')
-                return False
-            try:
-                if os.path.exists(credentials) and os.path.isfile(credentials):
-                    f = open(credentials, 'r')
-                    cfg = json.load(f)
-                    for credential in cfg.keys():
-                        connection.update({'%s' % credential: cfg.get(credential)})
-                    webcli = ErmrestClient(scheme=connection.get('scheme', None), \
-                                           host=connection.get("host", None), \
-                                           port=connection.get("port", None), \
-                                           username=connection.get("username", None), \
-                                           password=connection.get("password", None), \
-                                           cookie=connection.get("cookie", None), \
-                                           basicDict=self.basicDict)
-                    webcli.connect()
-                    self.clients.update({'%s' % (key): webcli})
-                else:
-                    serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
-                    serviceconfig.sendMail('ERROR', 'Report FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
-                    return False
-            except:
-                et, ev, tb = sys.exc_info()
-                serviceconfig.logger.debug('Exception generated during reading the Report credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                serviceconfig.sendMail('ERROR', 'Report FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                return False
-        self.webcli = webcli
+        self.webcli = self.clients.get('%s' % (self.webconn), None)
+        if self.webcli == None:
+            serviceconfig.logger.debug("Web Connection for reports does not exist.")
+            serviceconfig.sendMail('ERROR', 'Report FAILURE: No Web Connection', 'Web Connection for reports does not exist.')
+            return False
         self.defaults = []
         url = '/ermrest/catalog/%d/schema/%s/table/%s/column' % (self.catalog, self.basicDict['urlQuote'](self.schema, safe=''), self.basicDict['urlQuote'](self.table, safe=''))
         try:

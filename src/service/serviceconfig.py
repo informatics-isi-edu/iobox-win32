@@ -135,12 +135,14 @@ def load():
     timeout = cfg.get('timeout', 30)
     monitored_dirs = cfg.get('monitored_dirs', None)
     report = cfg.get('report', None)
+    connections = cfg.get('connections', None)
     if monitored_dirs:
         observerManager = observer.ObserverManager(mail_server=mail_server, \
                                                   mail_sender=mail_sender, \
                                                   mail_receiver=mail_receiver, \
                                                   timeout=timeout, \
                                                   report=report, \
+                                                  connections=connections, \
                                                   monitored_dirs=monitored_dirs)
         return observerManager.load()
     else:
