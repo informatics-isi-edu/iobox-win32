@@ -277,7 +277,7 @@ Below is a sample of an configuration file. It:
 						{
 							"handler": "hatrac",
 							"warn_on_duplicates": true,
-    						"chunk_size": 100000000,
+    						"chunk_size": 10000000,
 							"webconn": "foo",
 							"url": "https://foo.org/hatrac/%(objname)s",
 							"create_parents": true,

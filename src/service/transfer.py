@@ -165,7 +165,7 @@ class Workflow(object):
                 """
                 Add the base64 digest string of the file computed with the md5 utility.
                 """
-                chunk_size = disposition.get('chunk_size', 100000000)
+                chunk_size = disposition.get('chunk_size', 10000000)
                 prefix = disposition.get('prefix', '') % outputDict
                 md5sum = self.basicDict['md5sum'](self.filename, chunk_size)
                 outputDict.update({'%smd5sum' % prefix: md5sum})
@@ -445,7 +445,7 @@ class Workflow(object):
                 url = disposition.get('url', None) % outputDict
                 o = urlparse.urlparse(url)
                 object_url = o.path
-                chunk_size = disposition.get('chunk_size', 100000000)
+                chunk_size = disposition.get('chunk_size', 10000000)
                 failure = disposition.get('failure', None)
                 webcli = None
                 webconn = disposition.get('webconn', None)
