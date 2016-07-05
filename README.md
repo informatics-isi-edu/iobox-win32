@@ -179,10 +179,12 @@ Below is a sample of an configuration file. It:
     "log": "C:\\Users\\your_user_id\\Documents\\iobox\\log\\iobox.log",
     "loglevel": "debug",
     "timeout": 30,
-    "mail_server": "smtp.mail_domain",
-    "mail_sender": "IOBox Online Notification <no_reply@isi.edu>",
-    "mail_receiver": "mail_id@mail_domain",
-    "mail_message": ["ERROR"],
+    "mail": {
+    	"server": "smtp.mail_domain",
+    	"sender": "IOBox Online Notification <no_reply@isi.edu>",
+    	"receiver": "mail_id@mail_domain",
+    	"actions": ["ERROR"]
+    },
 	"connections": {
 		"foo": {
 			"scheme": "https",
@@ -327,10 +329,11 @@ The sample is using the following:
    - **log**: the service log file.
    - **loglevel**: the log level. Valid values are: `error, warning, info and debug`.
    - **timeout**: the waiting time in minutes before a retry process will occur.
-   - **mail_server**: the mail server used to send status notifications.
-   - **mail_sender**: the sender of the mail notifications.
-   - **mail_receiver**: the receiver of the mail notifications.
-   - **mail_message**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
+   - **mail**: the mail configuration for sending status notifications. It defines the following:
+       - **server**: the mail server used for sending notifications.
+       - **sender**: the sender of the mails.
+       - **receiver**: the receiver of the mails.
+       - **actions**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
    - **connections**: defines the Web connections to be used by the **ermrest** and **hatrac** handlers. 
      The connection is identified by a name that might be referred in those handlers. The parameter **credentials** points to a JSON file that contains 
      the  credential information. 

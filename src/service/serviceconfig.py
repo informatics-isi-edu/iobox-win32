@@ -66,7 +66,7 @@ __LOGLEVEL = {'error': logging.ERROR,
               'debug': logging.DEBUG}
 
 # Mail Message
-mail_message = ['ERROR',
+mail_actions = ['ERROR',
                 'WARNING',
                 'NOTICE',
                 'INFO']
@@ -85,7 +85,7 @@ def load():
     """
     Load configuration file
     """
-    global logger, mail_server, mail_sender, mail_receiver, error_message, mail_message
+    global logger, mail_server, mail_sender, mail_receiver, error_message, mail_actions
     hasLogger = False
     cfg = {}
     if os.path.exists(default_config_filename):
@@ -128,10 +128,12 @@ def load():
     """ 
     Global settings 
     """
-    mail_server = cfg.get('mail_server', None)
-    mail_sender = cfg.get('mail_sender', None)
-    mail_receiver = cfg.get('mail_receiver', None)
-    mail_message = cfg.get('mail_message', mail_message)
+    mail_cfg = cfg.get('mail', None)
+    if mail_cfg != None:
+        mail_server = mail_cfg.get('server', None)
+        mail_sender = mail_cfg.get('sender', None)
+        mail_receiver = mail_cfg.get('receiver', None)
+        mail_actions = mail_cfg.get('actions', mail_actions)
     timeout = cfg.get('timeout', 30)
     monitored_dirs = cfg.get('monitored_dirs', None)
     report = cfg.get('report', None)
@@ -149,9 +151,9 @@ def load():
         return None
     
 def sendMail(message, subject, text):
-    global logger, mail_server, mail_sender, mail_receiver, mail_message
+    global logger, mail_server, mail_sender, mail_receiver, mail_actions
     
-    if mail_server and mail_sender and mail_receiver and (message in mail_message or message=='ANY'):
+    if mail_server and mail_sender and mail_receiver and (message in mail_actions or message=='ANY'):
         try:
             msg = MIMEText.MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
             msg['Subject'] = 'IOBox %s' % subject
@@ -201,8 +203,8 @@ def getLogErrorMsg():
 
     return error_message
 
-def getMailMsg():
-    global mail_message
+def getMailActions():
+    global mail_actions
 
-    return mail_message
+    return mail_actions
 

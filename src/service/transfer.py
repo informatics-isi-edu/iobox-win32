@@ -408,7 +408,7 @@ class Workflow(object):
                                     rowsCount = len(rows)
                                     if rowsCount > 0:
                                         serviceconfig.logger.info('Bypassing the CONFLICT error due to the existence of %d duplicate(s).' % rowsCount)
-                                        if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
+                                        if duplicate_warning==True or 'WARNING' in serviceconfig.getMailActions():
                                             serviceconfig.sendMail('ANY', 'ERMREST POST WARNING: Duplicate found', 'Found duplicate entry in ermrest for the file "%s". The POST CONFLICT error will be ignored.' % (self.filename))
                                             self.reportAction(self.filename, 'duplicate', 'ERMREST Duplicate')
                                         success = True
@@ -460,7 +460,7 @@ class Workflow(object):
                     
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
-                    if duplicate_warning==True or 'WARNING' in serviceconfig.getMailMsg():
+                    if duplicate_warning==True or 'WARNING' in serviceconfig.getMailActions():
                         serviceconfig.sendMail('ANY', 'HATRAC WARNING: Duplicate found', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                         self.reportAction(self.filename, 'duplicate', 'HATRAC Duplicate')
                     continue
