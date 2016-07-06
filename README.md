@@ -109,22 +109,21 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
    The **POST** request, will create a row and will return a **409 Conflict** 
    error response if it already exists, while the **PUT** _entity_ request 
    will create a row if no match is found or update it if it already exists. 
-   For the **PUT** _attributegroup_ request, the **group_key** specifies the 
-   columns matching an existing stored row, while the **target_columns** 
-   specifies the columns to be updated. The **url** will specify only the 
-   table to be updated. Example:
+   For the **PUT** _attributegroup_ request, you specify in the URL the **group_key** to
+   identify the matching columns that will cause an row to be updated and 
+   the **target_columns** to specify the columns to be updated. The **colmap** specifies 
+   the body of the request containing the values for the **group_key** and 
+   **target_columns** columns. Example:
 
    ```
       {
          "handler": "ermrest",
          "method": "PUT",
-         "group_key": {
-                  "column1": 1
-               },
-         "target_columns": {
+         "colmap": {
+                  "column1": 1,
                   "column2": "foo"
                },
-         "url": "https://foo.org/ermrest/catalog/1/attributegroup/table1"
+         "url": "https://foo.org/ermrest/catalog/1/attributegroup/table1/column1;column2"
        }
 
    ```
@@ -292,15 +291,13 @@ Below is a sample of an configuration file. It:
 						{
 							"handler": "ermrest",
 							"method": "PUT",
-							"group_key": {
-								"ID": "%(sha256)s"
-							},
-							"target_columns": {
+							"colmap": {
+								"ID": "%(sha256)s",
 								"Filename": "%(sha256)s.czi",
 								"Probe": "%(Probe)s"
 							},
 							"webconn": "foo",
-							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s"
+							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/ID;Filename,Probe"
 						}
 					]
 				}

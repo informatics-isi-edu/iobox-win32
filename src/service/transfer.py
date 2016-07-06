@@ -248,7 +248,7 @@ class Workflow(object):
                     
                 body = []
                 ignoreErrorCodes = []
-                if method == 'POST' or method == 'PUT' and disposition.get('colmap', None) != None:
+                if method == 'POST' or method == 'PUT' and '/entity/' in url:
                     """
                     Build the POST body.
                     """
@@ -290,29 +290,18 @@ class Workflow(object):
                     json_body = body
                     body = self.json2csv(body)
                     serviceconfig.logger.debug("Entity body: %s" % body)
-                elif method == 'PUT':
-                    """
-                    Build the PUT target.
-                    """
-                    group_key = disposition.get('group_key', {})
-                    group_cols = []
-                    for col in group_key.keys():
-                        group_cols.append(self.basicDict['urlQuote'](col))
-                    target_columns = disposition.get('target_columns', {})
-                    target_cols = []
-                    for col in target_columns.keys():
-                        target_cols.append(self.basicDict['urlQuote'](col))
-                    url = '%s/%s;%s' % (url, ','.join(group_cols), ','.join(target_cols))
+                elif method == 'PUT' and '/attributegroup/' in url:
                     serviceconfig.logger.debug("PUT url: %s" % url)
                     """
                     Build the PUT body.
                     """
                     cols = dict()
-                    for col in group_key.keys():
-                        value = group_key[col] % outputDict
-                        cols.update({col: value})
-                    for col in target_columns.keys():
-                        value = target_columns[col] % outputDict
+                    colmap = disposition.get('colmap', {})
+                    for col in colmap.keys():
+                        try:
+                            value = colmap[col] % outputDict
+                        except:
+                            value = colmap[col]
                         cols.update({col: value})
                     body.append(cols)
                     body = self.json2csv(body)
