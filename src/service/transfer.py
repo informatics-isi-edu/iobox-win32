@@ -269,20 +269,25 @@ class Workflow(object):
                         try:
                             resp = webcli.send_request('GET', '%s/' % (columns_url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                             rows = json.load(resp)
+                            defaults = []
                             for row in rows:
                                 if row['name'] not in cols.keys():
                                     cols.update({row['name']: None})
+                                    defaults.append(self.basicDict['urlQuote'](row['name'], safe=''))
+                            if len(defaults) > 0:
+                                url = '%s?defaults=%s' % (url, ','.join(defaults))
                         except ErmrestHTTPException, e:
                             complete = False
                             if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                 failure = 'retry'
                                 status = 'retry'
+                                status_code = e.status
                         except:
                             complete = False
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                         if complete==False:
-                            self.reportAction(self.filename, status, '%d' % e.status)
+                            self.reportAction(self.filename, status, '%d' % status_code)
                             self.moveFile(self.filename, failure, fromDir)
                             break
 
@@ -457,7 +462,13 @@ class Workflow(object):
                 create_parents = disposition.get('create_parents', False)
                 pathes = o.path.split('/')[:-1]
                 namespaces = pathes[2:]
-                res = webcli.retrieveNamespace('/'.join(pathes))
+                try:
+                    res = webcli.retrieveNamespace('/'.join(pathes))
+                except:
+                    et, ev, tb = sys.exc_info()
+                    serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: Can not retrieve namespace', 'Can not retrieve namespace "%s"\n. Error: "%s"' % ('/'.join(pathes), ''.join(traceback.format_exception(et, ev, tb))))
+                    raise
+                    
                 if res == None:
                     """
                     Parent namespace does not exist
@@ -499,7 +510,9 @@ class Workflow(object):
                         self.moveFile(self.filename, failure, fromDir)
                         break
                 try:
-                    job_id, status = webcli.uploadFile(object_url, self.filename, chunk_size)
+                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size)
+                    outputDict.update({'hatrac_location': hatrac_location})
+                    serviceconfig.logger.debug('hatrac_location: "%s"' % (hatrac_location))
                     serviceconfig.sendMail('INFO', 'HATRAC SUCCESS', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
                 except:
                     et, ev, tb = sys.exc_info()
