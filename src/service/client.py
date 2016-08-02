@@ -287,7 +287,7 @@ class ErmrestClient (object):
             job_id = self.createUploadJob(object_url, filePath, chunk_size)
             self.chunksUpload(object_url, filePath, job_id, chunk_size)
             res = self.chunksUploadFinalization(object_url, job_id)
-            return (job_id, 'SUCCEEDED', res)
+            return (job_id, 'SUCCEEDED', res.strip())
         except:
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('Can not upload file "%s" in namespace "%s://%s%s". Error: "%s"' % (filePath, self.scheme, self.host, object_url, str(ev)))
