@@ -28,9 +28,9 @@ import observer
 from logging.handlers import RotatingFileHandler    
 import smtplib
 from email import Encoders
-from email import MIMEBase
-from email import MIMEMultipart
-from email import MIMEText
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 FORMAT = '%(asctime)s: %(levelname)s <%(module)s>: %(message)s'
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ As of %(today)s there are:
 %(duplicate)d duplicate(s)
 %(retry)d retry(ies)
 
-The attached zip file contains a detailed report.
+The attached file contains a detailed report.
 
 """
 error_message = None
@@ -155,7 +155,7 @@ def sendMail(message, subject, text):
     
     if mail_server and mail_sender and mail_receiver and (message in mail_actions or message=='ANY'):
         try:
-            msg = MIMEText.MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
+            msg = MIMEText('%s\n\n%s' % (text, mail_footer), 'plain')
             msg['Subject'] = 'IOBox %s' % subject
             msg['From'] = mail_sender
             msg['To'] = mail_receiver
@@ -173,16 +173,16 @@ def sendReport(subject, report):
     
     if mail_server and mail_sender and mail_receiver:
         try:
-            outer = MIMEMultipart.MIMEMultipart()
+            outer = MIMEMultipart()
             outer['Subject'] = 'IOBox %s' % subject
             outer['From'] = mail_sender
             outer['To'] = mail_receiver
             
-            msg = MIMEText.MIMEText('%s\n\n\n\n%s' % ((_report_mail % (dict(success=report.get('success', 0), failure=report.get('failure', 0), duplicate=report.get('duplicate', 0), retry=report.get('retry', 0), today=report.get('today', 'YYYY-MM-DD')))), mail_footer), 'plain')
+            msg = MIMEText('%s\n\n\n\n%s' % ((_report_mail % (dict(success=report.get('success', 0), failure=report.get('failure', 0), duplicate=report.get('duplicate', 0), retry=report.get('retry', 0), today=report.get('today', 'YYYY-MM-DD')))), mail_footer), 'plain')
             outer.attach(msg)
             
             fp = open('%s%s%s' % (report.get('output'), os.sep, report.get('file')), 'rb')
-            msg = MIMEBase.MIMEBase('application', 'octet-stream')
+            msg = MIMEBase('application', 'octet-stream')
             msg.set_payload(fp.read())
             fp.close()
             Encoders.encode_base64(msg)
