@@ -347,7 +347,6 @@ class Workflow(object):
                         complete = False
                         et, ev, tb = sys.exc_info()
                         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                        serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: %s' % str(et), 'Exception generated during the retry process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                         self.reportAction(self.filename, 'failure', str(et))
                     if complete==False:
                         self.moveFile(self.filename, failure, fromDir)

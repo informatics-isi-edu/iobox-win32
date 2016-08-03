@@ -240,7 +240,7 @@ class ErmrestClient (object):
             et, ev, tb = sys.exc_info()
             serviceconfig.logger.error('got HTTP exception: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('ERROR', '%s FAILURE: Unexpected Exception' % webapp, 'Error generated during the HTTP request: method="%s", url="%s://%s%s", error="%s"' % (method, self.scheme, self.host, url, str(ev)))
+            serviceconfig.sendMail('ERROR', '%s FAILURE: Unexpected Exception' % webapp, 'Error generated during the HTTP request: method="%s", url="%s://%s%s", error="\n%s\n%s"' % (method, self.scheme, self.host, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
             raise
 
     """
