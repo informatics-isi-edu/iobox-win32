@@ -164,8 +164,12 @@ class ObserverManager(object):
     """
     Get the pattern groups.
     """
-    def patterngroups(self, pattern, filename, prefix):
-        m = re.search(pattern, os.path.basename(filename))
+    def patterngroups(self, pattern, filename, prefix, relpath_matching, fromDir):
+        if relpath_matching == True:
+            filePath = filename[len(fromDir)+1:].replace("\\","/")
+        else:
+            filePath = os.path.basename(filename)
+        m = re.search(pattern, filePath)
         if m:
            ret = dict() 
            for group in m.groupdict():

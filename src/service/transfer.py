@@ -7,6 +7,7 @@ import traceback
 import time
 import winerror
 import errno
+import re
 from client import ErmrestHTTPException, ErmrestClient
 from httplib import CONFLICT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT, REQUEST_TIMEOUT
 from datetime import datetime
@@ -105,7 +106,7 @@ class Workflow(object):
             fromDir = self.transfer
         else:
             fromDir = None
-        self.findRule(filename)
+        self.findRule(filename, fromDir)
         if self.rule:
             try:
                 self.applyDisposition(fromDir)
@@ -113,22 +114,23 @@ class Workflow(object):
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during applyDisposition "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                self.moveFile(filename, 'failure', fromDir)
+                self.moveFile(filename, 'failure', fromDir, self.rule.get('dir_cleanup_patterns', ['.*']))
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
             serviceconfig.sendMail('ERROR', 'File Processing FAILURE: No rule found', 'No rule found for file %s' % filename)
             self.reportAction(filename, 'failure', 'No rule found')
-            self.moveFile(filename, 'failure', fromDir)
+            self.moveFile(filename, 'failure', fromDir, [])
     
     """
     Find the rule for uploading a file.
     """
-    def findRule(self, filename):
+    def findRule(self, filename, fromDir):
         self.rule = None
         for rule in self.rules:
+            relpath_matching = rule.get('relpath_matching', False)
             pattern = rule.get('pattern', None)
             if pattern:
-                groups = self.basicDict['patterngroups'](pattern, filename, '')
+                groups = self.basicDict['patterngroups'](pattern, filename, '', relpath_matching, fromDir)
                 if groups != None:
                     self.rule = rule
                     self.filename = filename
@@ -143,14 +145,16 @@ class Workflow(object):
         outputDict = dict()
         outputDict.update({'basename': self.basicDict['basename'](self.filename)})
         outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
+        dir_cleanup_patterns = self.rule.get('dir_cleanup_patterns', ['.*'])
         for disposition in self.rule['disposition']:
             if disposition['handler'] == 'patterngroups':
                 """
                 Add the pattern groups.
                 """
+                relpath_matching = self.rule.get('relpath_matching', False)
                 pattern = self.rule.get('pattern', None)
                 prefix = disposition.get('prefix', '') % outputDict
-                groups = self.basicDict['patterngroups'](pattern, self.filename, prefix)
+                groups = self.basicDict['patterngroups'](pattern, self.filename, prefix, relpath_matching, fromDir)
                 if groups:
                     for group in groups.keys():
                         outputDict.update({group: groups[group]})
@@ -222,7 +226,7 @@ class Workflow(object):
                             serviceconfig.sendMail('ERROR', 'Handler Processing FAILURE: Bad datetime handler', 'Exception generated during processing the file "%s":\n%s\n%s' % (self.filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                             self.reportAction(self.filename, 'failure', 'Bad datetime handler')
                 if success == False:
-                    self.moveFile(self.filename, 'failure', fromDir)
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
                     complete = False
                     break
                     
@@ -243,7 +247,7 @@ class Workflow(object):
                     serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: No Web Connection.', 'Web Connection for ERMREST does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for ERMREST does not exist')
                     complete = False
-                    self.moveFile(self.filename, failure, fromDir)
+                    self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     break
                     
                 body = []
@@ -288,7 +292,7 @@ class Workflow(object):
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                         if complete==False:
                             self.reportAction(self.filename, status, '%d' % status_code)
-                            self.moveFile(self.filename, failure, fromDir)
+                            self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                             break
 
                     body.append(cols)
@@ -349,7 +353,7 @@ class Workflow(object):
                         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                         self.reportAction(self.filename, 'failure', str(et))
                     if complete==False:
-                        self.moveFile(self.filename, failure, fromDir)
+                        self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                     else:
                         serviceconfig.sendMail('INFO', 'ERMREST GET SUCCESS', '%s: %s' % (method, url))
@@ -428,7 +432,7 @@ class Workflow(object):
                         serviceconfig.logger.debug("failure action: %s" % failure)
                     if success==False:
                         complete = False
-                        self.moveFile(self.filename, failure, fromDir)
+                        self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
             elif disposition['handler'] == 'hatrac':
                 """
@@ -448,7 +452,7 @@ class Workflow(object):
                     serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: No Web Connection.', 'Web Connection for HATRAC does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for HATRAC does not exist')
                     complete = False
-                    self.moveFile(self.filename, failure, fromDir)
+                    self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     break
                     
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
@@ -499,14 +503,14 @@ class Workflow(object):
                                     break
                         if success == False:
                             complete = False
-                            self.moveFile(self.filename, failure, fromDir)
+                            self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                             break
                     else:
                         serviceconfig.logger.debug('Can not upload the file "%s". The namespace "%s" does not exist and the "create_parents" option is not set to "true".' % (self.filename, '/'.join(namespaces)))
                         serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: Namespace does not exist', 'Namespace "%s" does not exist and the option "create_parents" is not set to "true".' % '/'.join(namespaces))
                         self.reportAction(self.filename, 'failure', 'Namespace does not exist')
                         complete = False
-                        self.moveFile(self.filename, failure, fromDir)
+                        self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                 try:
                     job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size)
@@ -517,12 +521,12 @@ class Workflow(object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     complete = False
-                    self.moveFile(self.filename, failure, fromDir)
+                    self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: %s' % str(et), 'Can not upload file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     self.reportAction(self.filename, 'failure', 'Can not upload file')
                     break
         if complete == True:
-            self.moveFile(self.filename, 'success', fromDir)
+            self.moveFile(self.filename, 'success', fromDir, dir_cleanup_patterns)
 
     """
     Check if the file is ready for processing, i.e. if copy/move into the directory has finished.
@@ -566,7 +570,7 @@ class Workflow(object):
     """
     Move the file into a directory based on the process result.
     """
-    def moveFile(self, filename, action, fromDir):
+    def moveFile(self, filename, action, fromDir, dir_cleanup_patterns):
         if action == 'success':
             subject = 'SUCCESS'
         else:
@@ -614,19 +618,22 @@ class Workflow(object):
         serviceconfig.sendMail('INFO', 'File Processing %s' % (subject), 'The file "%s" was moved to the "%s" directory.' % (os.path.basename(filename), action))
         if action == 'success':
             self.reportAction(filename, 'success')
-        self.cleanDirectory(fromDir, dirnameParts)
+        self.cleanDirectory(fromDir, dirnameParts, dir_cleanup_patterns)
     
     """
     Remove empty directories from the fromDir
     """
-    def cleanDirectory(self, fromDir, dirnameParts):
+    def cleanDirectory(self, fromDir, dirnameParts, dir_cleanup_patterns):
         if len(dirnameParts) > 0:
             dirname = '%s%s%s' % (fromDir,os.sep,os.sep.join(dirnameParts))
+            dir_relpath = '/'.join(dirnameParts)
             if len(os.listdir(dirname)) == 0:
-                os.rmdir(dirname)
-                time.sleep(1)
-                self.cleanDirectory(fromDir, dirnameParts[:-1])
-
+                for pattern in dir_cleanup_patterns:
+                    if re.search(pattern, dir_relpath):
+                        os.rmdir(dirname)
+                        time.sleep(1)
+                        self.cleanDirectory(fromDir, dirnameParts[:-1], dir_cleanup_patterns)
+                        break
             
     """
     Convert a JSON body to CSV
