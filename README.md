@@ -361,6 +361,11 @@ The sample is using the following:
 
    - **pattern**: the pattern used in matching the file names. 
      For example, a valid name will be `http---cirm.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi`.
+   - **relpath_matching**: if present and equal to `true`, the pattern will be applied to the relative path of the file. 
+     By default, the pattern is applied to the basename of the file.
+   - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
+     be deleted only if their relative path matches any of the patterns of `dir_cleanup_patterns`. By default, 
+     all the empty subdirectories of the `inbox` will be deleted.
    - **"handler": "patterngroups"**: identifies the `slideid` from the file name 
      (in our example `20131110-wnt1creZEGG-RES-0-06-000`). The Python dictionary is
      updated with the key `slideid`.
