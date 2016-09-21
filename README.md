@@ -1,10 +1,11 @@
-# IObox (win32)
+# IObox
 
-IObox (win32) is a client-side utility for uploading and registering files to ERMrest+Hatrac services.
+IObox is a client-side utility for uploading and registering files to ERMrest+Hatrac services. 
+It is implemented on WIN32 as well as on Linux.
 
-## System Requirements
+## IObox WIN32 System Requirements
 
-IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a service. The following are the prerequisites:
+IObox WIN32 is a Python based utility. It is implemented on **Windows 7** as a service. The following are the prerequisites:
 
 1. **Python** version 2.7+. Update the system PATH variable with the path to the directory containing the python exe, e.g., C:\Python27.
 1. **pywin32**, Mark Hammond's add-on that includes the Win32 API, COM support, and Pythonwin extensions. It's available from the pywin32 project on SourceForge. (https://sourceforge.net/projects/pywin32/)
@@ -12,7 +13,7 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
 1. **py2exe** from SourceForge.
 
 
-## Installation
+## IObox WIN32 Installation
 
 1. Check out the code from GitHub:
 
@@ -42,7 +43,43 @@ IObox (win32) is a Python based utility. It is implemented on **Windows 7** as a
 
     ```IOBoxObserverService.exe -remove```
 
-## Configuration
+## IObox Linux System Requirements
+
+IObox Linux is a Python based utility. It is implemented on **CentOS 7** as an agent. The following are the prerequisites:
+
+1. **Python** version 2.7+.
+1. **scandir**. Install it with:
+    ```pip install scandir```
+
+## IObox Linux Installation
+
+1. Check out the code from GitHub:
+
+    ```git clone https://github.com/informatics-isi-edu/iobox-win32.git``` 
+
+1. Go into the **iobox-win32** directory.
+
+1. Run:
+
+    ```python setup.py install```
+
+  The  **build** directory will be created. Remove it.
+
+1. To start the agent run:
+
+    ```python-agent [-c <configuration_file>]```
+    
+    If the `-c` option is missing, the `~/.iobox.conf` will be considered.
+      
+1. To stop the agent, identify first the process id by running:
+
+    ``` ps -ef | grep iobox-agent```
+    
+    and then kill the process by running:
+    
+    ```kill <process_id>```
+   
+## IObox Configuration
 
 IObox strategy is based on disposition rules. There is a config stanza for each monitored directory, doing the following:
 
