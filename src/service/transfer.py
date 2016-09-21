@@ -5,7 +5,12 @@ import json
 import urlparse
 import traceback
 import time
-import winerror
+
+try:
+    import winerror
+except:
+    pass
+
 import errno
 import re
 from client import ErmrestHTTPException, ErmrestClient

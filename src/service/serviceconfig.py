@@ -24,6 +24,8 @@ import json
 import sys
 import traceback
 
+is_win32 = False
+    
 import observer
 from logging.handlers import RotatingFileHandler    
 import smtplib
@@ -71,16 +73,21 @@ mail_actions = ['ERROR',
                 'NOTICE',
                 'INFO']
 
-def load():
+def load(config_filename=None):
     """
     Read the configuration file and initialize the service.
     """
+    global is_win32
     
-    """
-    Use home directory as default location for outbox.conf
-    """
-    default_config_filename = os.path.join(
-            os.path.expanduser('~'), 'Documents', 'iobox', 'config', 'outbox.conf')
+    if config_filename == None:
+        """
+        Use home directory as default location for outbox.conf
+        """
+        is_win32 = True
+        default_config_filename = os.path.join(
+                os.path.expanduser('~'), 'Documents', 'iobox', 'config', 'outbox.conf')
+    else:
+        default_config_filename = config_filename
     
     """
     Load configuration file
@@ -207,4 +214,9 @@ def getMailActions():
     global mail_actions
 
     return mail_actions
+
+def isWin32():
+    global is_win32
+
+    return is_win32
 

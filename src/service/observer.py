@@ -18,9 +18,12 @@ import os
 import sys
 import traceback
 
-import win32file
-import win32con
-
+try:
+    import win32file
+    import win32con
+except:
+    from scandir import scandir, walk
+    
 import os
 import urllib
 import re
@@ -127,7 +130,8 @@ class ObserverManager(object):
         
         for watcher in self.observers:
             watcher.recover()
-            watcher.enable()
+            if serviceconfig.isWin32() == True:
+                watcher.enable()
         
         return self
 
@@ -141,13 +145,26 @@ class ObserverManager(object):
             timer.start()
             
         for watcher in self.observers:
-            timer = Timer(1, watcher.start, kwargs={})
+            if serviceconfig.isWin32() == True:
+                timer = Timer(1, watcher.start, kwargs={})
+            else:
+                timer = Timer(1, watcher.startScandir, kwargs={})
             self.timer.append(timer)
             timer.start()
-            
-        for timer in self.timer:
-            timer.join()
-
+        if serviceconfig.isWin32() == True:     
+            for timer in self.timer:
+                timer.join()
+        else:
+            activeThreads = []
+            for timer in self.timer:
+                activeThreads.append(timer)
+            while len(activeThreads) > 0:
+                for timer in activeThreads:
+                    timer.join(10)
+                activeThreads = []
+                for timer in self.timer:
+                    if timer.is_alive():
+                       activeThreads.append(timer) 
     """
     Stop the observers.
     """
@@ -564,7 +581,55 @@ class Observer(object):
         self.timer.start()
         
     """
-    Start the watcher.
+    Start the Linux watcher.
+    """
+    def getNewFiles(self, path):
+        files = []
+        for entry in scandir(path):
+            if entry.is_file():
+                files.append('%s/%s' % (path, entry.name))
+            else:
+                files.extend(self.getNewFiles('%s/%s' % (path, entry.name)))
+                
+        return files
+        
+    """
+    Start the Linux watcher.
+    """
+    def startScandir(self):
+        """
+        While the service is active
+        """
+        while self.isAlive:
+            files = self.getNewFiles(self.inbox)
+            while len(files) > 0:
+                for full_filename in files:
+                    try:
+                        self.workflow.processFile(full_filename, 'new')
+                    except:
+                        et, ev, tb = sys.exc_info()
+                        serviceconfig.logger.error('got exception during the processing of the new file "%s"\n"%s"' % (full_filename, str(ev)))
+                        serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                        serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                        self.reportAction(full_filename, 'failure', str(et))
+                files = self.getNewFiles(self.inbox)
+            count = (self.timeout*60) / 10
+            i = 0
+            try:
+                while self.isAlive:
+                    time.sleep(10)
+                    i = i+1
+                    if i >= count:
+                        break
+            except:
+                et, ev, tb = sys.exc_info()
+                serviceconfig.logger.error('got Sleep exception "%s"' % str(ev))
+                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                serviceconfig.sendMail('ERROR', 'Sleep Processing FAILURE: %s' % str(et), 'Exception generated during the sleep process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            
+                
+    """
+    Start the win32 watcher.
     """
     def start(self):
         """
@@ -648,7 +713,7 @@ class Observer(object):
         try:
             while self.isAlive:
                 time.sleep(10)
-                i+=1
+                i = i+1
                 if i >= count:
                     self.workflow.processRetry()
                     i = 0
@@ -664,7 +729,8 @@ class Observer(object):
     """
     def stop(self):
         serviceconfig.logger.debug('stopping...')
-        f = open('%s\\stop_service.txt' % self.inbox, 'w')
-        f.close()
+        if serviceconfig.isWin32() == True:
+            f = open('%s\\stop_service.txt' % self.inbox, 'w')
+            f.close()
         self.isAlive = False
         self.workflow.isAlive = False

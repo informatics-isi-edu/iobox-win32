@@ -1,5 +1,11 @@
 from distutils.core import setup
 import py2exe
+import os
+
+try:
+    os.remove('__init__.py')
+except:
+    pass
 
 
 setup(

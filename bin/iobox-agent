@@ -1,0 +1,33 @@
+#!/usr/bin/python
+
+from optparse import OptionParser
+import os
+import signal
+
+from ioboxlib import serviceconfig
+
+observerManager = None
+
+def sigterm_handler(signum, frame):
+    global observerManager
+    if observerManager != None and signum == signal.SIGTERM:
+        serviceconfig.logger.info('The service has received the SIGTERM signal.')
+        observerManager.stop()
+        
+parser = OptionParser()
+parser.header = {}
+parser.add_option('-c', '--config', action='store', dest='config', type='string', help='Configuration file')
+
+(options, args) = parser.parse_args()
+
+if options.config:
+    config_filename = options.config
+else:
+    config_filename = os.path.join(os.path.expanduser('~'), '.iobox.conf')
+
+signal.signal(signal.SIGTERM, sigterm_handler)
+observerManager = serviceconfig.load(config_filename)
+if observerManager:
+    observerManager.start()
+
+        
