@@ -68,7 +68,7 @@ IObox Linux is a Python based utility. It is implemented on **CentOS 7** as an a
 
 1. To start the agent run:
 
-    ```python-agent [-c <configuration_file>]```
+    ```iobox-agent [-c <configuration_file>]```
     
     If the `-c` option is missing, the `~/.iobox.conf` file will be considered.
       
