@@ -49,6 +49,7 @@ IObox Linux is a Python based utility. It is implemented on **CentOS 7** as an a
 
 1. **Python** version 2.7+.
 1. **scandir**. Install it with:
+
     ```pip install scandir```
 
 ## IObox Linux Installation
@@ -69,7 +70,7 @@ IObox Linux is a Python based utility. It is implemented on **CentOS 7** as an a
 
     ```python-agent [-c <configuration_file>]```
     
-    If the `-c` option is missing, the `~/.iobox.conf` will be considered.
+    If the `-c` option is missing, the `~/.iobox.conf` file will be considered.
       
 1. To stop the agent, identify first the process id by running:
 
