@@ -111,25 +111,31 @@ def load(config_filename=None):
                 logging.getLogger().addHandler(logging.NullHandler())
             logger.debug("config: %s" % cfg)
         except ValueError as e:
-            if hasLogger == False:
-                serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
-                rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
-                rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
-                logger.addHandler(rotatingFileHandler)
-                logger.setLevel(__LOGLEVEL.get('debug'))
             error_message = 'Malformed configuration file: %s' % e
-            logger.error(error_message)
+            if is_win32 == True:
+                if hasLogger == False:
+                    serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
+                    rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
+                    rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
+                    logger.addHandler(rotatingFileHandler)
+                    logger.setLevel(__LOGLEVEL.get('debug'))
+                logger.error(error_message)
+            else:
+                sys.stderr.write('%s\n' % error_message)
             return None
         else:
             f.close()
     else:
-        serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
-        rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
-        rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
-        logger.addHandler(rotatingFileHandler)
-        logger.setLevel(__LOGLEVEL.get('debug'))
         error_message = 'Configuration file: "%s" does not exist.' % default_config_filename
-        logger.error(error_message)
+        if is_win32 == True:
+            serviceLogFile = os.path.join(os.path.expanduser('~'), 'Documents', 'iobox_service.log')
+            rotatingFileHandler = RotatingFileHandler(serviceLogFile, maxBytes=1000000, backupCount=7)
+            rotatingFileHandler.setFormatter(logging.Formatter(FORMAT))
+            logger.addHandler(rotatingFileHandler)
+            logger.setLevel(__LOGLEVEL.get('debug'))
+            logger.error(error_message)
+        else:
+            sys.stderr.write('%s\n' % error_message)
         return None
     
     """ 
