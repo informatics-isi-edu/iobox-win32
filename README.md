@@ -45,12 +45,13 @@ IObox WIN32 is a Python based utility. It is implemented on **Windows 7** as a s
 
 ## IObox Linux System Requirements
 
-IObox Linux is a Python based utility. It is implemented on **CentOS 7** as an agent. The following are the prerequisites:
+IObox Linux is a Python based utility. It is implemented on **CentOS 7** or **Fedora** as an agent. The following are the prerequisites:
 
 1. **Python** version 2.7+.
 1. **scandir**. Install it with:
-
-    ```pip install scandir```
+  - `yum install python-scandir` on CentOS + EPEL
+  - `yum install python2-scandir` on Fedora
+  - `pip install scandir` on other Python environments
 
 ## IObox Linux Installation
 
