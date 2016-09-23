@@ -398,3 +398,13 @@ class ErmrestClient (object):
             serviceconfig.logger.error('Can not cancel job "%s" for object "%s://%s%s". Error: "%s"' % (job_id, self.scheme, self.host, url, str(ev)))
             raise
             
+    def getHatracLocation(self, object_url):
+        """
+        Retrieve the object hatrac location.
+        """
+        url = '%s;versions' % (object_url)
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        resp = self.send_request('GET', url, '', headers, False)
+        versions = json.loads(resp.read())
+        return versions[0]
+

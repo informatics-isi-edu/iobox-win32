@@ -462,6 +462,9 @@ class Workflow(object):
                     
                 if webcli.get_md5sum(object_url) == self.basicDict['md5sum'](self.filename, chunk_size):
                     serviceconfig.logger.info('Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
+                    hatrac_location = webcli.getHatracLocation(object_url)
+                    outputDict.update({'hatrac_location': hatrac_location})
+                    serviceconfig.logger.debug('hatrac_location: "%s"' % (outputDict['hatrac_location']))
                     if warn_on_duplicates==True or 'WARNING' in serviceconfig.getMailActions():
                         serviceconfig.sendMail('ANY', 'HATRAC WARNING: Duplicate found', 'Skipping the upload of the file "%s" as it has the same md5sum as the one from hatrac.' % self.filename)
                         self.reportAction(self.filename, 'duplicate', 'HATRAC Duplicate')
