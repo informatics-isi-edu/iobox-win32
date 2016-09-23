@@ -8,13 +8,11 @@ from ioboxlib import serviceconfig
 
 observerManager = None
 
-def sigterm_handler(signum, frame):
+def exit_handler(signum, frame):
     global observerManager
-    if observerManager != None and (signum == signal.SIGTERM or signum == signal.SIGINT):
-        received_signal = 'SIGTERM'
-        if signum == signal.SIGINT:
-            received_signal = 'CTRL+C'
-        serviceconfig.logger.info('The agent has received the %s signal.' % received_signal)
+    if observerManager != None:
+        sig_name = tuple((v) for v, k in signal.__dict__.iteritems() if k == signum)[0]
+        serviceconfig.logger.info('The agent has received the %s signal.' % sig_name)
         observerManager.stop()
         
 parser = OptionParser()
@@ -28,8 +26,8 @@ if options.config:
 else:
     config_filename = os.path.join(os.path.expanduser('~'), '.iobox.conf')
 
-signal.signal(signal.SIGTERM, sigterm_handler)
-signal.signal(signal.SIGINT, sigterm_handler)
+signal.signal(signal.SIGTERM, exit_handler)
+signal.signal(signal.SIGINT, exit_handler)
 observerManager = serviceconfig.load(config_filename)
 if observerManager:
     observerManager.start()
