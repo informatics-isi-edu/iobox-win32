@@ -337,7 +337,10 @@ class Workflow(object):
                                 outputDict.update({'encode.%s' % col: self.basicDict['urlQuote'](col, safe='')})
                                 value = row[col]
                                 if value != None:
-                                    value = self.basicDict['urlQuote'](value, safe='')
+                                    try:
+                                        value = self.basicDict['urlQuote'](value, safe='')
+                                    except:
+                                        pass
                                 outputDict.update({'encode.value.%s' % col: value})
                         else:
                             serviceconfig.logger.debug('GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
