@@ -325,6 +325,7 @@ Below is a sample of an configuration file. It:
 							"handler": "ermrest",
 							"method": "GET",
 							"webconn": "foo",
+							"continueAfter": ["ZERO_RESULT"],
 							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:Experiment/Disambiguator=H/Probe"
 						},
 						{
@@ -431,7 +432,11 @@ The sample is using the following:
      that duplicates detected at `hatrac` will be notified through the email.
    - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
      exactly one row; an error is reported otherwise. The Python dictionary is 
-     updated with the columns and values returned by the row.
+     updated with the columns and values returned by the row. The `continueAfter` 
+     option contains an array with the following valid values:
+      - `"ZERO_RESULT"` specifies to continue in case the `GET`request returns zero rows. 
+      - `"*"` specifies to continue in case of any `ermrest` error
+      - a numeric `value`: specifies to continue in case the `ermrest` error matches the numeric `value`.
    - **"handler": "ermrest"** with `"method": "PUT"`. The `group_key`
      specifies the columns to identify the entity that will be updated.
      The `target_columns` specifies the columns that will be updated. The 
