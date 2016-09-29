@@ -257,6 +257,7 @@ class Workflow(object):
                     
                 body = []
                 ignoreErrorCodes = []
+                continueAfter = disposition.get('continueAfter', [])
                 if method == 'POST' or method == 'PUT' and '/entity/' in url:
                     """
                     Build the POST body.
@@ -344,17 +345,19 @@ class Workflow(object):
                                 outputDict.update({'encode.value.%s' % col: value})
                         else:
                             serviceconfig.logger.debug('GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
-                            serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: Invalid number of rows returned', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
-                            self.reportAction(self.filename, 'failure', 'Invalid number of rows returned by the GET request')
-                            complete = False
+                            if '*' not in continueAfter and (len(rows) != 0 or 'ZERO_RESULT' not in continueAfter):
+                                serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: Invalid number of rows returned', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
+                                self.reportAction(self.filename, 'failure', 'Invalid number of rows returned by the GET request')
+                                complete = False
                     except ErmrestHTTPException, e:
-                        complete = False
-                        status = 'failure'
-                        if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
-                            failure = 'retry'
-                            status = 'retry'
-                        serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: %d' % e.status, 'Error generated during the %s request "%s" for the file "%s":\n%s' % (method, url, self.filename, str(e)))
-                        self.reportAction(self.filename, status, '%d' % e.status)
+                        if '*' not in continueAfter and e.status not in continueAfter:
+                            complete = False
+                            status = 'failure'
+                            if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
+                                failure = 'retry'
+                                status = 'retry'
+                            serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: %d' % e.status, 'Error generated during the %s request "%s" for the file "%s":\n%s' % (method, url, self.filename, str(e)))
+                            self.reportAction(self.filename, status, '%d' % e.status)
                     except:
                         complete = False
                         et, ev, tb = sys.exc_info()
@@ -418,7 +421,9 @@ class Workflow(object):
                                             self.reportAction(self.filename, 'duplicate', 'ERMREST Duplicate')
                                         success = True
                             except ErmrestHTTPException, e:
-                                if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
+                                if '*' in continueAfter or e.status in continueAfter:
+                                    success = True
+                                elif e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
                                     failure = 'retry'
                                     self.reportAction(self.filename, 'retry', 'ERMREST Transient Error')
                             except:
@@ -426,12 +431,15 @@ class Workflow(object):
                                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                                 self.reportAction(self.filename, 'failure', str(et))
                         else:
-                            status = 'failure'
-                            if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
-                                failure = 'retry'
-                                status = 'retry'
-                            serviceconfig.sendMail('ERROR', 'ERMREST FAILURE %d' % e.status, 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
-                            self.reportAction(self.filename, status, '%d' % e.status)
+                            if '*' in continueAfter or e.status in continueAfter:
+                                success = True
+                            else:
+                                status = 'failure'
+                                if e.status in [0, REQUEST_TIMEOUT, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT] or e.retry==True:
+                                    failure = 'retry'
+                                    status = 'retry'
+                                serviceconfig.sendMail('ERROR', 'ERMREST FAILURE %d' % e.status, 'Error generated during the %s request: %s\n%s' % (method, url, str(e)))
+                                self.reportAction(self.filename, status, '%d' % e.status)
                     except:
                         et, ev, tb = sys.exc_info()
                         serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: %s' % str(et), 'Exception generated during the %s request: %s\n%s\n%s' % (method, url, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
