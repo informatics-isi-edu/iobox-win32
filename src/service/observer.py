@@ -674,7 +674,7 @@ class Observer(object):
                 if self.isAlive:
                     full_filename = os.path.join(self.inbox, file)
                     action = ACTIONS.get (action, "Unknown")
-                    if action == 'Created' or action == 'Updated':
+                    if (action == 'Created' or action == 'Updated') and os.path.isfile(full_filename):
                         ready = self.workflow.fileIsReady(full_filename)
                         if ready == True:
                             try:
