@@ -37,9 +37,11 @@ import json
 from client import ErmrestClient, ErmrestHTTPException
 
 import serviceconfig
+from Queue import Queue
 
 from threading import Timer
 from threading import Lock
+from threading import Thread
 
 ACTIONS = {
     1 : "Created",
@@ -594,6 +596,18 @@ class Observer(object):
         return files
         
     """
+    Poll for new files.
+    """
+    def pollFiles(self, path):
+        files = []
+        for entry in os.listdir(path):
+            if os.path.isfile('%s%s%s' % (path, os.sep, entry)) and not entry.endswith('.lckchk'):
+                files.append('%s%s%s' % (path, os.sep, entry))
+            else:
+                files.extend(self.pollFiles('%s%s%s' % (path, os.sep, entry)))
+        return files
+    
+    """
     Start the Linux watcher.
     """
     def startScandir(self):
@@ -629,6 +643,59 @@ class Observer(object):
             
                 
     """
+    Wait for file events
+    """
+    def worker(self):
+        while self.isAlive:
+            self.queue.get()
+            self.queue.task_done()
+            
+            """
+            Empty the queue
+            """
+            while not self.queue.empty():
+               self.queue.get() 
+               self.queue.task_done()
+               
+            """
+            Poll the root directory until no new files are available
+            """
+            files = self.pollFiles(self.inbox)
+            while self.isAlive and len(files) > 0:
+                if os.path.join(self.inbox, 'stop_service.txt') in files:
+                    """
+                    Stop service was issued
+                    """
+                    self.isAlive = False
+                    os.remove(os.path.join(self.inbox, 'stop_service.txt'))
+                    """
+                    Removing a file will create an event that needs to be consumed.
+                    """
+                    continue
+                for full_filename in files:
+                    ready = self.workflow.fileIsReady(full_filename) 
+                    if ready == True:
+                        try:
+                            self.workflow.processFile(full_filename, 'new')
+                        except:
+                            et, ev, tb = sys.exc_info()
+                            serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
+                            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                            serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                files = self.pollFiles(self.inbox)
+        """
+        Empty the queue before exiting the thread. Most likely it might have at least the event for removing the stop_service.txt file.
+        """
+        try:
+            self.queue.get(True, 1)
+            self.queue.task_done()
+            while not self.queue.empty():
+               self.queue.get() 
+               self.queue.task_done()
+        except:
+            self.queue.task_done()
+        
+    """
     Start the win32 watcher.
     """
     def start(self):
@@ -636,7 +703,7 @@ class Observer(object):
         If the service was stopped during the recover process,
         then delete the stop_service.txt file and exit
         """
-        if self.isAlive==False:
+        if self.isAlive == False:
             try:
                 time.sleep(1)
                 os.remove(os.path.join(self.inbox, 'stop_service.txt'))
@@ -645,14 +712,12 @@ class Observer(object):
             return
                 
         serviceconfig.logger.debug('starting...')
+        self.queue = Queue()
+        t = Thread(target=self.worker)
+        t.start()
+        
         while self.isAlive:
-            #
-            # ReadDirectoryChangesW takes a previously-created
-            # handle to a directory, a buffer size for results,
-            # a flag to indicate whether to watch subtrees and
-            # a filter of what changes to notify.
-            #
-            results = win32file.ReadDirectoryChangesW (
+            self.queue.put(win32file.ReadDirectoryChangesW (
                 self.hDir,
                 1024,
                 True,
@@ -664,43 +729,16 @@ class Observer(object):
                 win32con.FILE_NOTIFY_CHANGE_SECURITY,
                 None,
                 None
-            )
-            notified = []
-            for action, file in results:
-                if file == 'stop_service.txt':
-                    time.sleep(1)
-                    self.isAlive = False
-                    os.remove(os.path.join(self.inbox, file))
-                if self.isAlive:
-                    full_filename = os.path.join(self.inbox, file)
-                    action = ACTIONS.get (action, "Unknown")
-                    if (action == 'Created' or action == 'Updated') and os.path.isfile(full_filename):
-                        ready = self.workflow.fileIsReady(full_filename)
-                        if ready == True:
-                            try:
-                                self.workflow.processFile(full_filename, 'new')
-                            except:
-                                et, ev, tb = sys.exc_info()
-                                serviceconfig.logger.error('got Processing exception "%s"' % str(ev))
-                                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                                serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during the processing of the file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                        elif ready == False:
-                            notified.append(file)
-            newFiles = [ f for f in os.listdir(self.inbox) if f not in notified and os.path.isfile(os.path.join(self.inbox,f)) ]
-            for f in newFiles:
-                if not self.isAlive:
-                    break
-                full_filename = '%s%s%s' % (self.inbox, os.sep, f)
-                ready = self.workflow.fileIsReady(full_filename)
-                if ready == True:
-                    try:
-                        self.workflow.processFile(full_filename, 'new')
-                    except:
-                        et, ev, tb = sys.exc_info()
-                        serviceconfig.logger.error('got Processing new file exception "%s"' % str(ev))
-                        serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                        serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                        self.reportAction(full_filename, 'failure', str(et))
+            ))
+        self.queue.join()
+        
+        """
+        Delete the stop_service.txt file generated by stopping the service
+        """
+        try:
+            os.remove(os.path.join(self.inbox, 'stop_service.txt'))
+        except:
+            pass
         
     """
     Retry uploading the files from the retry directory.
@@ -729,8 +767,8 @@ class Observer(object):
     """
     def stop(self):
         serviceconfig.logger.debug('stopping...')
+        self.isAlive = False
+        self.workflow.isAlive = False
         if serviceconfig.isWin32() == True:
             f = open('%s\\stop_service.txt' % self.inbox, 'w')
             f.close()
-        self.isAlive = False
-        self.workflow.isAlive = False

@@ -564,26 +564,26 @@ class Workflow(object):
             if e.winerror == winerror.ERROR_SHARING_VIOLATION or e.winerror == winerror.ERROR_FILE_NOT_FOUND:
                 return False
             else:
-                et, ev, tb = sys.exc_info()
-                serviceconfig.logger.error('got WindowsError on checking if the file "%s" is ready for procesing.' % str(ev))
-                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                #et, ev, tb = sys.exc_info()
+                #serviceconfig.logger.error('got WindowsError on checking if the file "%s" is ready for procesing.' % str(ev))
+                #serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                 return None
         except IOError,e:
             if e.errno == errno.EACCES:
                 return False
             else:
-                et, ev, tb = sys.exc_info()
-                serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
-                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                self.reportAction(self.filename, 'failure', str(et))
+                #et, ev, tb = sys.exc_info()
+                #serviceconfig.logger.error('got IOError on checking if the file "%s" is ready for procesing.' % str(ev))
+                #serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                #serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                #self.reportAction(self.filename, 'failure', str(et))
                 return None
         except:
-            et, ev, tb = sys.exc_info()
-            serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
-            serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-            serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-            self.reportAction(self.filename, 'failure', str(et))
+            #et, ev, tb = sys.exc_info()
+            #serviceconfig.logger.error('got Exception on checking if the file "%s" is ready for procesing.' % str(ev))
+            #serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+            #serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during on checking if the new file "%s" is ready:\n%s\n%s' % (filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            #self.reportAction(self.filename, 'failure', str(et))
             return None
 
     """
