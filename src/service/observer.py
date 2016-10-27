@@ -693,7 +693,7 @@ class Observer(object):
                self.queue.get() 
                self.queue.task_done()
         except:
-            self.queue.task_done()
+            pass
         
     """
     Start the win32 watcher.
