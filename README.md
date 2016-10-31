@@ -217,6 +217,7 @@ Below is a sample of an configuration file. It:
     "log": "C:\\Users\\your_user_id\\Documents\\iobox\\log\\iobox.log",
     "loglevel": "debug",
     "timeout": 30,
+    "scan_interval": 5,
     "mail": {
     	"server": "smtp.mail_domain",
     	"sender": "IOBox Online Notification <no_reply@isi.edu>",
@@ -366,6 +367,7 @@ The sample is using the following:
    - **log**: the service log file.
    - **loglevel**: the log level. Valid values are: `error, warning, info and debug`.
    - **timeout**: the waiting time in minutes before a retry process will occur.
+   - **scan_interval**: the waiting time in minutes before a rescanning of the input directory occurs in case no file change event was triggerred.
    - **mail**: the mail configuration for sending status notifications. It defines the following:
        - **server**: the mail server used for sending notifications.
        - **sender**: the sender of the mails.
