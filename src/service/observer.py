@@ -59,6 +59,7 @@ Class to manage the observers.
 class ObserverManager(object):
     def __init__(self, **kwargs):
         self.timeout = kwargs.get("timeout")
+        self.scan_interval = kwargs.get("scan_interval")
         self.monitored_dirs = kwargs.get("monitored_dirs")
         self.report = kwargs.get("report")
         self.connections = kwargs.get("connections")
@@ -513,6 +514,7 @@ class Observer(object):
         self.monitored_dir = kwargs.get("monitored_dir")
         observers = kwargs.get("observers")
         self.timeout = observers.timeout
+        self.scan_interval = observers.scan_interval
         self.basicDict = observers.basicDict
         self.clients = observers.clients
         self.reporter = observers.reporter
@@ -647,8 +649,11 @@ class Observer(object):
     """
     def worker(self):
         while self.isAlive:
-            self.queue.get()
-            self.queue.task_done()
+            try:
+                self.queue.get(True, self.scan_interval*60)
+                self.queue.task_done()
+            except:
+                serviceconfig.logger.debug('*** "%s": Worker thread wakes up after %d seconds time out.' % (self.inbox, self.scan_interval*60))
             
             """
             Empty the queue
@@ -703,7 +708,7 @@ class Observer(object):
     Trigger a change event for files that were dropped during the recovering process.
     """
     def triggerChangeEvent(self):
-        serviceconfig.logger.debug('triggerring a change event...')
+        serviceconfig.logger.debug('*** "%s": Triggerring a change event...' % self.inbox)
         if serviceconfig.isWin32() == True:
             f = open('%s\\ReadDirectoryChangesW.txt' % self.inbox, 'w')
             f.close()
@@ -728,7 +733,7 @@ class Observer(object):
                 pass
             return
                 
-        serviceconfig.logger.debug('starting...')
+        serviceconfig.logger.debug('*** "%s": Starting the worker thread' % self.inbox)
         self.queue = Queue()
         t = Thread(target=self.worker)
         t.start()
@@ -769,7 +774,7 @@ class Observer(object):
     Retry uploading the files from the retry directory.
     """
     def retryFiles(self, timeout):
-        serviceconfig.logger.debug('starting the Timer...')
+        serviceconfig.logger.debug('*** "%s": Starting the Timer...' % self.inbox)
         # sleep maximum 10 seconds such that the Timer can be stopped
         count = timeout / 10
         i = 0
@@ -785,13 +790,13 @@ class Observer(object):
             serviceconfig.logger.error('got Retry exception "%s"' % str(ev))
             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
             serviceconfig.sendMail('ERROR', 'Retry Processing FAILURE: %s' % str(et), 'Exception generated during the retrying process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-        serviceconfig.logger.debug('Timer has stopped.')
+        serviceconfig.logger.debug('*** "%s": Timer has stopped.' % self.inbox)
         
     """
     Stop the watcher.
     """
     def stop(self):
-        serviceconfig.logger.debug('stopping...')
+        serviceconfig.logger.debug('*** %s": Stopping...' % self.inbox)
         self.isAlive = False
         self.workflow.isAlive = False
         if serviceconfig.isWin32() == True:
