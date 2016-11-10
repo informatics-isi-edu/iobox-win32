@@ -30,6 +30,7 @@ import serviceconfig
 import hashlib
 import socket
 import errno
+import mimetypes
 
 class ErmrestHTTPException(Exception):
     def __init__(self, value, status, retry=False):
@@ -320,10 +321,17 @@ class ErmrestClient (object):
             file_size = os.path.getsize(filePath)
             url = '%s;upload' % object_url
             headers = {'Content-Type': 'application/json'}
+            if mimetypes.inited == False:
+                mimetypes.init()
+                if serviceconfig.content_types_map != None:
+                    mimetypes.types_map.update(serviceconfig.content_types_map)
+            content_type,encoding = mimetypes.guess_type(filePath)
+            if content_type == None:
+                content_type = 'application/octet-stream'
             obj = {"chunk_bytes": chunk_size,
                    "total_bytes": file_size,
                    "content_md5": hash_value,
-                   "content_type": "application/octet-stream"}
+                   "content_type": content_type}
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
             job_id = res.split('/')[-1][:-1]
