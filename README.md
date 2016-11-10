@@ -216,6 +216,10 @@ Below is a sample of an configuration file. It:
 {
     "log": "C:\\Users\\your_user_id\\Documents\\iobox\\log\\iobox.log",
     "loglevel": "debug",
+    "content_types_map": {
+    	".czi": "image/czi",
+    	".fcs": "image/fcs"
+    },
     "timeout": 30,
     "scan_interval": 5,
     "mail": {
@@ -366,6 +370,7 @@ The sample is using the following:
 
    - **log**: the service log file.
    - **loglevel**: the log level. Valid values are: `error, warning, info and debug`.
+   - **content_types_map**: a JSON object whose keys are files extentions and the values are the content_types.
    - **timeout**: the waiting time in minutes before a retry process will occur.
    - **scan_interval**: the waiting time in minutes before a rescanning of the input directory occurs in case no file change event was triggerred.
    - **mail**: the mail configuration for sending status notifications. It defines the following:
