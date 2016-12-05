@@ -413,6 +413,10 @@ The sample is using the following:
    - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
      be deleted only if their relative path matches any of the patterns of `dir_cleanup_patterns`. By default, 
      all the empty subdirectories of the `inbox` will be deleted.
+   - **workflow_files**: specifies a list of files, each containing a workflow in JSON format for a monitored directory.
+     The files names should specify the full path. 
+     The workflows are appended to the list of **monitored_dirs**.
+     You need to specify at least one of the **monitored_dirs** or **workflow_files** options.
    - **"handler": "patterngroups"**: identifies the `slideid` from the file name 
      (in our example `20131110-wnt1creZEGG-RES-0-06-000`). The Python dictionary is
      updated with the key `slideid`.
