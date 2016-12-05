@@ -100,6 +100,22 @@ def load(config_filename=None):
         f = open(default_config_filename, 'r')
         try:
             cfg = json.load(f)
+            
+            """
+            Extend the configuration file with workflows specified in files, if any
+            """
+            workflow_files = cfg.get('workflow_files', None)
+            if workflow_files != None:
+                dirs = cfg.get('monitored_dirs', None)
+                if dirs == None:
+                    dirs = []
+                    cfg['monitored_dirs'] = dirs
+                for filename in workflow_files:
+                    workflow_file = open(filename, 'r')
+                    workflow_directory = json.load(workflow_file)
+                    dirs.append(workflow_directory)
+                    workflow_file.close()
+            
             loglevel = cfg.get('loglevel', None)
             logfile = cfg.get('log', None)
             if loglevel and logfile:
