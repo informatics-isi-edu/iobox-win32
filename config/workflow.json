@@ -1,0 +1,66 @@
+{
+    "inbox": "C:\\Users\\your_user_id\\Documents\\iobox\\input",
+    "success": "C:\\Users\\your_user_id\\Documents\\iobox\\success",
+    "failure": "C:\\Users\\your_user_id\\Documents\\iobox\\failure",
+    "retry": "C:\\Users\\your_user_id\\Documents\\iobox\\retry",
+    "transfer": "C:\\Users\\your_user_id\\Documents\\iobox\\transfer",
+    "rules": [
+    	{
+			"pattern": ".*id=(?P<slideid>.*[-][0-9]*)[.]czi",
+			"disposition" : [
+				{
+					"handler": "patterngroups"
+				},
+				{
+					"handler": "sha256"
+				},
+				{
+					"handler": "urlQuote",
+					"prefix": "encode.",
+					"output": {
+						"slideid": "%(slideid)s", 
+						"sha256": "%(sha256)s",
+						"schema": "Microscopy",
+						"table": "Scan"
+					}
+				},
+				{
+					"handler": "templates",
+					"output": {
+						"objname": "%(encode.schema)s/%(encode.slideid)s/%(encode.sha256)s.czi"
+					}
+				},
+				{
+					"handler": "ermrest",
+					"method": "POST",
+					"colmap": {
+						"ID": "%(sha256)s",
+						"Slide ID": "%(slideid)s",
+						"Original Filename": "%(basename)s",
+						"File Size": "%(nbytes)d"
+					},
+					"webconn": "foo",
+					"url": "https://foo.org/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
+				},
+				{
+					"handler": "hatrac",
+					"chunk_size": 10000000,
+					"webconn": "foo",
+					"url": "https://foo.org/hatrac/%(objname)s",
+					"create_parents": true,
+					"failure": "transfer"
+				},
+				{
+					"handler": "ermrest",
+					"method": "PUT",
+					"colmap": {
+						"ID": "%(sha256)s",
+						"Filename": "%(sha256)s.czi"
+					},
+					"webconn": "foo",
+					"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/ID;Filename"
+				}
+			]
+		}
+	]
+}
