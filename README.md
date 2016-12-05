@@ -321,6 +321,7 @@ Below is a sample of an configuration file. It:
 							"handler": "hatrac",
 							"warn_on_duplicates": true,
     						"chunk_size": 10000000,
+    						"content_disposition": "filename*=UTF-8''%(basename)s",
 							"webconn": "foo",
 							"url": "https://foo.org/hatrac/%(objname)s",
 							"create_parents": true,
@@ -437,8 +438,9 @@ The sample is using the following:
    - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
      specifies the columns that will be updated. The **warn_on_duplicates** parameter 
      specifies that duplicates detected at `ermrest` will be notified through the email.
-   - **"handler": "hatrac"**: Uploads the file in chunks and create the
-     parent namespaces if absent. In case of failure, move the file to
+   - **"handler": "hatrac"**: Uploads the file in chunks and creates the
+     parent namespaces if absent. If present, the **content_disposition** parameter specifies
+     the name with which the file will be downloaded. In case of failure, the file will be moved to
      the `transfer` directory. The **warn_on_duplicates** parameter specifies 
      that duplicates detected at `hatrac` will be notified through the email.
    - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
