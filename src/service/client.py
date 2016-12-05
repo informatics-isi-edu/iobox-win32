@@ -328,10 +328,10 @@ class ErmrestClient (object):
             content_type,encoding = mimetypes.guess_type(filePath)
             if content_type == None:
                 content_type = 'application/octet-stream'
-            obj = {"chunk_bytes": chunk_size,
-                   "total_bytes": file_size,
-                   "content_md5": hash_value,
-                   "content_type": content_type}
+            obj = {"chunk-length": chunk_size,
+                   "content-length": file_size,
+                   "content-md5": hash_value,
+                   "content-type": content_type}
             if content_disposition != None:
                 obj['content_disposition'] = content_disposition
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
