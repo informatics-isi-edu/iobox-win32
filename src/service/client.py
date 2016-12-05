@@ -283,9 +283,9 @@ class ErmrestClient (object):
     """
     Upload a file.
     """
-    def uploadFile(self, object_url, filePath, chunk_size):
+    def uploadFile(self, object_url, filePath, chunk_size, content_disposition):
         try:
-            job_id = self.createUploadJob(object_url, filePath, chunk_size)
+            job_id = self.createUploadJob(object_url, filePath, chunk_size, content_disposition)
             self.chunksUpload(object_url, filePath, job_id, chunk_size)
             res = self.chunksUploadFinalization(object_url, job_id)
             return (job_id, 'SUCCEEDED', res.strip())
@@ -315,7 +315,7 @@ class ErmrestClient (object):
     """
     Create a job for uploading a file.
     """
-    def createUploadJob(self, object_url, filePath, chunk_size):
+    def createUploadJob(self, object_url, filePath, chunk_size, content_disposition):
         try:
             hash_value = self.basicDict['md5sum'](filePath, chunk_size)
             file_size = os.path.getsize(filePath)
@@ -332,6 +332,8 @@ class ErmrestClient (object):
                    "total_bytes": file_size,
                    "content_md5": hash_value,
                    "content_type": content_type}
+            if content_disposition != None:
+                obj['content_disposition'] = content_disposition
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
             job_id = res.split('/')[-1][:-1]

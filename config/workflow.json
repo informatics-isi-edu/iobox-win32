@@ -46,6 +46,7 @@
 					"handler": "hatrac",
 					"chunk_size": 10000000,
 					"webconn": "foo",
+					"content_disposition": "filename*=UTF-8''test.txt",
 					"url": "https://foo.org/hatrac/%(objname)s",
 					"create_parents": true,
 					"failure": "transfer"

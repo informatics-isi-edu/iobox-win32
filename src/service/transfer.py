@@ -460,6 +460,7 @@ class Workflow(object):
                 object_url = o.path
                 chunk_size = disposition.get('chunk_size', 10000000)
                 failure = disposition.get('failure', None)
+                content_disposition = disposition.get('content_disposition', None)
                 webcli = None
                 webconn = disposition.get('webconn', None)
                 if webconn != None:
@@ -532,7 +533,7 @@ class Workflow(object):
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                 try:
-                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size)
+                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size, content_disposition)
                     outputDict.update({'hatrac_location': hatrac_location})
                     serviceconfig.logger.debug('hatrac_location: "%s"' % (hatrac_location))
                     serviceconfig.sendMail('INFO', 'HATRAC SUCCESS', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))
