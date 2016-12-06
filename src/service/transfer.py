@@ -239,6 +239,31 @@ class Workflow(object):
                 """
                 Execute an ermrest request.
                 """
+                
+                """
+                Check if we have a precondition to execute the ermrest request
+                """
+                condition = disposition.get('condition', None)
+                if condition != None:
+                    val1 = condition[0]
+                    try:
+                        val1 = condition[0] % outputDict
+                    except KeyError:
+                        val1 = None
+                    except:
+                        pass
+                    
+                    val2 = condition[1]
+                    try:
+                        val2 = condition[1] % outputDict
+                    except KeyError:
+                        val2 = None
+                    except:
+                        pass
+                    
+                    if val1 != val2:
+                        continue
+                    
                 method = disposition.get('method', None)
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
                 unique_columns = disposition.get('unique_columns', [])
@@ -461,6 +486,8 @@ class Workflow(object):
                 chunk_size = disposition.get('chunk_size', 10000000)
                 failure = disposition.get('failure', None)
                 content_disposition = disposition.get('content_disposition', None)
+                if content_disposition != None:
+                    content_disposition = content_disposition % outputDict
                 webcli = None
                 webconn = disposition.get('webconn', None)
                 if webconn != None:

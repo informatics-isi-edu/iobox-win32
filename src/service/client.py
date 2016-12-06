@@ -333,7 +333,7 @@ class ErmrestClient (object):
                    "content-md5": hash_value,
                    "content-type": content_type}
             if content_disposition != None:
-                obj['content_disposition'] = content_disposition
+                obj['content-disposition'] = content_disposition
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
             job_id = res.split('/')[-1][:-1]
