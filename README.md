@@ -295,27 +295,39 @@ Below is a sample of an configuration file. It:
 							}
 						},
 						{
-							"handler": "templates",
-							"output": {
-								"objname": "%(encode.schema)s/%(encode.slideid)s/%(encode.sha256)s.czi"
-							}
+
+							"handler": "ermrest",
+							"method": "GET",
+							"webconn": "foo",
+							"continueAfter": ["*"],
+							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
+
 						},
 						{
 							"handler": "ermrest",
+							"condition": ["%(id)d", null],
 							"method": "POST",
 							"warn_on_duplicates": true,
 							"colmap": {
-								"ID": "%(sha256)s",
-								"Slide ID": "%(slideid)s",
-								"Original Filename": "%(basename)s",
-								"MD5": "%(md5sum)s",
-								"File Size": "%(nbytes)d",
-								"Modified Date": "%(last_modified_date)s",
-								"HTTP URL": null,
-								"Thumbnail": null
+								"checksum": "%(sha256)s",
+								"slide_id": "%(slideid)s",
+								"filename": "%(basename)s"
 							},
 							"webconn": "foo",
 							"url": "https://foo.org/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
+						},
+						{
+
+							"handler": "ermrest",
+							"method": "GET",
+							"webconn": "foo",
+							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
+						},
+						{
+							"handler": "templates",
+							"output": {
+								"objname": "%(encode.schema)s/%(encode.slideid)s/%(encode.slideid)s-%(Disambiguator)d.czi"
+							}
 						},
 						{
 							"handler": "hatrac",
@@ -329,21 +341,14 @@ Below is a sample of an configuration file. It:
 						},
 						{
 							"handler": "ermrest",
-							"method": "GET",
-							"webconn": "foo",
-							"continueAfter": ["ZERO_RESULT"],
-							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:Experiment/Disambiguator=H/Probe"
-						},
-						{
-							"handler": "ermrest",
 							"method": "PUT",
 							"colmap": {
-								"ID": "%(sha256)s",
-								"Filename": "%(sha256)s.czi",
-								"Probe": "%(Probe)s"
+								"id": "%(id)d",
+								"filename": "%(slideid)s-%(Disambiguator)d.czi",
+								"bytes": "%(nbytes)d"
 							},
 							"webconn": "foo",
-							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/ID;Filename,Probe"
+							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/id;filename,bytes"
 						}
 					]
 				}
@@ -408,7 +413,7 @@ The sample is using the following:
 1. Rule:
 
    - **pattern**: the pattern used in matching the file names. 
-     For example, a valid name will be `http---cirm.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi`.
+     For example, a valid name will be `http---foo.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi`.
    - **relpath_matching**: if present and equal to `true`, the pattern will be applied to the relative path of the file. 
      By default, the pattern is applied to the basename of the file.
    - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
@@ -435,7 +440,8 @@ The sample is using the following:
      encode.sha256, encode.schema and encode.table`.
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
-   - **"handler": "ermrest"** with `"method": "POST"`. The `colmap`
+   - **"handler": "ermrest"** with `"method": "POST"`. The `condition` specifies that the `id` got
+     from the previous `GET` request must be `NULL` in order the `POST` request to be executed. The `colmap`
      specifies the columns that will be updated. The **warn_on_duplicates** parameter 
      specifies that duplicates detected at `ermrest` will be notified through the email.
    - **"handler": "hatrac"**: Uploads the file in chunks and creates the
