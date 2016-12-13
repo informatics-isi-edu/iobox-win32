@@ -203,8 +203,14 @@ class Workflow(object):
                 prefix = disposition.get('prefix', '') % outputDict
                 templates = disposition['output']
                 for template in templates.keys():
-                    value = templates[template] % outputDict
-                    outputDict.update({'%s%s' % (prefix, template): value})
+                    try:
+                        value = templates[template] % outputDict
+                    except:
+                        value = templates[template]
+                    if value == None:
+                        del outputDict[template]
+                    else:
+                        outputDict.update({'%s%s' % (prefix, template): value})
             elif disposition['handler'] == 'datetime':
                 """
                 Handle date and time types.
