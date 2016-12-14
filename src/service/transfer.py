@@ -111,15 +111,15 @@ class Workflow(object):
             fromDir = self.transfer
         else:
             fromDir = None
-        self.findRule(filename, fromDir)
-        if self.rule:
+        rule = self.findRule(filename, fromDir)
+        if rule:
             try:
-                self.applyDisposition(fromDir)
+                self.applyDisposition(fromDir, rule, dict())
             except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during applyDisposition "%s"' % str(ev))
                 serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                self.moveFile(filename, 'failure', fromDir, self.rule.get('dir_cleanup_patterns', ['.*']))
+                self.moveFile(filename, 'failure', fromDir, rule.get('dir_cleanup_patterns', ['.*']))
         else:
             serviceconfig.logger.error('No rule found for file %s' % filename)
             serviceconfig.sendMail('ERROR', 'File Processing FAILURE: No rule found', 'No rule found for file %s' % filename)
@@ -130,39 +130,68 @@ class Workflow(object):
     Find the rule for uploading a file.
     """
     def findRule(self, filename, fromDir):
-        self.rule = None
+        ret = None
         for rule in self.rules:
             relpath_matching = rule.get('relpath_matching', False)
             pattern = rule.get('pattern', None)
             if pattern:
                 groups = self.basicDict['patterngroups'](pattern, filename, '', relpath_matching, fromDir)
                 if groups != None:
-                    self.rule = rule
+                    ret = rule
                     self.filename = filename
                     serviceconfig.logger.debug('rule: "%s" applied to file: "%s"' % (pattern, filename))
                     break
+        return ret
+
+    """
+    Find the inner rule for uploading a file.
+    """
+    def findInnerRule(self, rules, fromDir):
+        ret = None
+        for rule in rules:
+            relpath_matching = rule.get('relpath_matching', False)
+            pattern = rule.get('pattern', None)
+            if pattern:
+                groups = self.basicDict['patterngroups'](pattern, self.filename, '', relpath_matching, fromDir)
+                if groups != None:
+                    ret = rule
+                    serviceconfig.logger.debug('inner rule: "%s" applied to file: "%s"' % (pattern, self.filename))
+                    break
+        return ret
 
     """
     Apply the dispositions of the rule.
     """
-    def applyDisposition(self, fromDir):
-        complete = True
-        outputDict = dict()
-        outputDict.update({'basename': self.basicDict['basename'](self.filename)})
-        outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
-        dir_cleanup_patterns = self.rule.get('dir_cleanup_patterns', ['.*'])
-        for disposition in self.rule['disposition']:
+    def applyDisposition(self, fromDir, rule, outputDict):
+        if len(outputDict) == 0:
+            complete = True
+            outputDict.update({'basename': self.basicDict['basename'](self.filename)})
+            outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
+        else:
+            """
+            Inner rule: Don't move the file
+            """
+            complete = False
+        dir_cleanup_patterns = rule.get('dir_cleanup_patterns', ['.*'])
+        for disposition in rule['disposition']:
             if disposition['handler'] == 'patterngroups':
                 """
                 Add the pattern groups.
                 """
-                relpath_matching = self.rule.get('relpath_matching', False)
-                pattern = self.rule.get('pattern', None)
+                relpath_matching = rule.get('relpath_matching', False)
+                pattern = rule.get('pattern', None)
                 prefix = disposition.get('prefix', '') % outputDict
                 groups = self.basicDict['patterngroups'](pattern, self.filename, prefix, relpath_matching, fromDir)
                 if groups:
                     for group in groups.keys():
                         outputDict.update({group: groups[group]})
+            elif disposition['handler'] == 'rules':
+                """
+                Execute an inner rule.
+                """
+                inner_rule = self.findInnerRule(disposition.get('rules', []), fromDir)
+                if inner_rule != None:
+                    self.applyDisposition(fromDir, inner_rule, outputDict)
             elif disposition['handler'] == 'sha256':
                 """
                 Add the checksum of the file.
