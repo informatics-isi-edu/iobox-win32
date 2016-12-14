@@ -260,7 +260,7 @@ Below is a sample of an configuration file. It:
 		    "transfer": "C:\\Users\\your_user_id\\Documents\\iobox\\transfer",
 		    "rules": [
 		    	{
-					"pattern": ".*id=(?P<slideid>.*[-][0-9]*)[.]czi",
+					"pattern": ".*id=(?P<slideid>.*[-][0-9]*)[.](czi|tiff)",
 					"disposition" : [
 						{
 							"handler": "patterngroups"
@@ -295,6 +295,36 @@ Below is a sample of an configuration file. It:
 							}
 						},
 						{
+							"handler": "rules",
+
+							"rules": [
+								{
+									"pattern": "*id=(?P<slideid>.*[-][0-9]*)[.]czi",
+									"disposition" : [
+										{
+											"handler": "templates",
+
+											"output": {
+												"File_Type": "zeiss"
+											}
+										}
+									]
+								},
+								{
+									"pattern": "*id=(?P<slideid>.*[-][0-9]*)[.]tiff",
+									"disposition" : [
+										{
+											"handler": "templates",
+
+											"output": {
+												"File_Type": "tiff"
+											}
+										}
+									]
+								}
+							]
+						},
+						{
 
 							"handler": "ermrest",
 							"method": "GET",
@@ -311,6 +341,7 @@ Below is a sample of an configuration file. It:
 							"colmap": {
 								"checksum": "%(sha256)s",
 								"slide_id": "%(slideid)s",
+								"File_Type": "%(File_Type)s",
 								"filename": "%(basename)s"
 							},
 							"webconn": "foo",
@@ -413,7 +444,7 @@ The sample is using the following:
 1. Rule:
 
    - **pattern**: the pattern used in matching the file names. 
-     For example, a valid name will be `http---foo.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi`.
+     For example, a valid name will be `http---foo.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.czi` or `http---foo.7.purl.org-?id=20131110-wnt1creZEGG-RES-0-06-000.tiff`.
    - **relpath_matching**: if present and equal to `true`, the pattern will be applied to the relative path of the file. 
      By default, the pattern is applied to the basename of the file.
    - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
@@ -440,6 +471,11 @@ The sample is using the following:
      encode.sha256, encode.schema and encode.table`.
    - **"handler": "templates"**: defines a template that will be used by **hatrac**.
      The Python dictionary is updated with the key `objname`.
+   - **"handler": "rules"**: defines a set of inner rules. An inner rule has a pattern that applies to the file name.
+     It inherits and extends the context (the metadata dictionary) from the caller rule.
+     It can contain any handler like the root rule.
+     Upon success, only the root rule will move the file to the **success** directory.
+     In our example, the inner rules are setting the `File_Type` based on the extension of the file.
    - **"handler": "ermrest"** with `"method": "POST"`. The `condition` specifies that the `id` got
      from the previous `GET` request must be `NULL` in order the `POST` request to be executed. The `colmap`
      specifies the columns that will be updated. The **warn_on_duplicates** parameter 
