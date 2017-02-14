@@ -363,6 +363,7 @@ Below is a sample of an configuration file. It:
 						{
 							"handler": "hatrac",
 							"warn_on_duplicates": true,
+							"digest": ["md5", "sha256"],
     						"chunk_size": 10000000,
     						"content_disposition": "filename*=UTF-8''%(basename)s",
 							"webconn": "foo",
@@ -484,7 +485,9 @@ The sample is using the following:
      parent namespaces if absent. If present, the **content_disposition** parameter specifies
      the name with which the file will be downloaded. In case of failure, the file will be moved to
      the `transfer` directory. The **warn_on_duplicates** parameter specifies 
-     that duplicates detected at `hatrac` will be notified through the email.
+     that duplicates detected at `hatrac` will be notified through the email. The **digest** 
+     attribute, if present, contains an array having as valid values `md5` and/or `sha256`. 
+     The default is `md5`. It sets in `hatrac` the metadata for the `content-md5` and `content-sha256` attributes.
    - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
      exactly one row; an error is reported otherwise. The Python dictionary is 
      updated with the columns and values returned by the row. The `continueAfter` 
