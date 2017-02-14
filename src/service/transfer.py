@@ -514,6 +514,7 @@ class Workflow(object):
                 """
                 Upload the file.
                 """
+                digest = disposition.get('digest', ['md5'])
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
                 url = disposition.get('url', None) % outputDict
                 o = urlparse.urlparse(url)
@@ -595,7 +596,7 @@ class Workflow(object):
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                 try:
-                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size, content_disposition)
+                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size, content_disposition, digest)
                     outputDict.update({'hatrac_location': hatrac_location})
                     serviceconfig.logger.debug('hatrac_location: "%s"' % (hatrac_location))
                     serviceconfig.sendMail('INFO', 'HATRAC SUCCESS', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))

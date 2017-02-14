@@ -72,6 +72,8 @@ class ObserverManager(object):
         self.basicDict.update({'mtime': self.mtime})
         self.basicDict.update({'sha256sum': self.sha256sum})
         self.basicDict.update({'md5sum': self.md5sum})
+        self.basicDict.update({'sha256base64': self.sha256base64})
+        self.basicDict.update({'content_digest': self.content_digest})
         self.basicDict.update({'patterngroups': self.patterngroups})
         self.basicDict.update({'urlQuote': urllib.quote})
         self.basicDict.update({'urlPath': self.urlPath})
@@ -256,6 +258,44 @@ class ObserverManager(object):
                 f.close()
         except:
             return None
+
+    """
+    Get the base64 digest string like sha256 utility would compute.
+    """
+    def sha256base64(self, fpath, chunk_size):
+        h = hashlib.sha256()
+        try:
+            f = open(fpath, 'rb')
+            try:
+                b = f.read(chunk_size)
+                while b:
+                    h.update(b)
+                    b = f.read(chunk_size)
+                return base64.b64encode(h.digest())
+            finally:
+                f.close()
+        except:
+            return None
+
+    """
+    Get the base64 digest strings like the sha256 and the md5 utilities would compute.
+    """
+    def content_digest(self, fpath, chunk_size):
+        hmd5 = hashlib.md5()
+        hsha256 = hashlib.sha256()
+        try:
+            f = open(fpath, 'rb')
+            try:
+                b = f.read(chunk_size)
+                while b:
+                    hmd5.update(b)
+                    hsha256.update(b)
+                    b = f.read(chunk_size)
+                return (base64.b64encode(hmd5.digest()), base64.b64encode(hsha256.digest()))
+            finally:
+                f.close()
+        except:
+            return (None, None)
 
 """
 Class to report the daily activity.
