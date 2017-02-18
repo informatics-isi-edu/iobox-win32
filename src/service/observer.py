@@ -206,7 +206,7 @@ class ObserverManager(object):
     def urlPath(self, uri):
         o = urlparse.urlparse(uri)
         index = uri.find(o.path)
-        if index > 0:
+        if index >= 0:
             return uri[index:]
         else:
             return ''
