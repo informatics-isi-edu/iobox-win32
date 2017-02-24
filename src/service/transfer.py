@@ -114,7 +114,7 @@ class Workflow(object):
         rule = self.findRule(filename, fromDir)
         if rule:
             try:
-                self.applyDisposition(fromDir, rule, dict())
+                self.applyDisposition(fromDir, rule, dict(), False, [])
             except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during applyDisposition "%s"' % str(ev))
@@ -162,16 +162,11 @@ class Workflow(object):
     """
     Apply the dispositions of the rule.
     """
-    def applyDisposition(self, fromDir, rule, outputDict):
+    def applyDisposition(self, fromDir, rule, outputDict, isInnerRule, results):
         if len(outputDict) == 0:
-            complete = True
             outputDict.update({'basename': self.basicDict['basename'](self.filename)})
             outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
-        else:
-            """
-            Inner rule: Don't move the file
-            """
-            complete = False
+        complete = True
         dir_cleanup_patterns = rule.get('dir_cleanup_patterns', ['.*'])
         for disposition in rule['disposition']:
             if disposition['handler'] == 'patterngroups':
@@ -191,7 +186,12 @@ class Workflow(object):
                 """
                 inner_rule = self.findInnerRule(disposition.get('rules', []), fromDir)
                 if inner_rule != None:
-                    self.applyDisposition(fromDir, inner_rule, outputDict)
+                    inner_results = []
+                    self.applyDisposition(fromDir, inner_rule, outputDict, True, inner_results)
+                    if 'failure' in inner_results:
+                        results.append('failure')
+                        complete = False
+                        break
             elif disposition['handler'] == 'sha256':
                 """
                 Add the checksum of the file.
@@ -268,6 +268,7 @@ class Workflow(object):
                 if success == False:
                     self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
                     complete = False
+                    results.append('failure')
                     break
                     
             elif disposition['handler'] == 'ermrest':
@@ -312,6 +313,7 @@ class Workflow(object):
                     serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: No Web Connection.', 'Web Connection for ERMREST does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for ERMREST does not exist')
                     complete = False
+                    results.append('failure')
                     self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     break
                     
@@ -357,6 +359,7 @@ class Workflow(object):
                             et, ev, tb = sys.exc_info()
                             serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                         if complete==False:
+                            results.append('failure')
                             self.reportAction(self.filename, status, '%d' % status_code)
                             self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                             break
@@ -424,6 +427,7 @@ class Workflow(object):
                         serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
                         self.reportAction(self.filename, 'failure', str(et))
                     if complete==False:
+                        results.append('failure')
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                     else:
@@ -508,6 +512,7 @@ class Workflow(object):
                         serviceconfig.logger.debug("failure action: %s" % failure)
                     if success==False:
                         complete = False
+                        results.append('failure')
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
             elif disposition['handler'] == 'hatrac':
@@ -532,6 +537,7 @@ class Workflow(object):
                     serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: No Web Connection.', 'Web Connection for HATRAC does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for HATRAC does not exist')
                     complete = False
+                    results.append('failure')
                     self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     break
                     
@@ -586,6 +592,7 @@ class Workflow(object):
                                     break
                         if success == False:
                             complete = False
+                            results.append('failure')
                             self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                             break
                     else:
@@ -593,6 +600,7 @@ class Workflow(object):
                         serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: Namespace does not exist', 'Namespace "%s" does not exist and the option "create_parents" is not set to "true".' % '/'.join(namespaces))
                         self.reportAction(self.filename, 'failure', 'Namespace does not exist')
                         complete = False
+                        results.append('failure')
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                 try:
@@ -604,11 +612,12 @@ class Workflow(object):
                     et, ev, tb = sys.exc_info()
                     serviceconfig.logger.error('Can not transfer file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     complete = False
+                    results.append('failure')
                     self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                     serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: %s' % str(et), 'Can not upload file "%s" in namespace "%s". Error: "%s"' % (self.filename, object_url, str(ev)))
                     self.reportAction(self.filename, 'failure', 'Can not upload file')
                     break
-        if complete == True:
+        if complete == True and isInnerRule == False:
             self.moveFile(self.filename, 'success', fromDir, dir_cleanup_patterns)
 
     """
