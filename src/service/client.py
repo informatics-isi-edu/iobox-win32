@@ -162,10 +162,30 @@ class ErmrestClient (object):
             self.webconn = None
 
     """
+    Append the cid=iobox string to the url query
+    """
+    def url_cid(self, url):
+        """
+        """
+        ret = url
+        o = urlparse.urlparse(url)
+        if o.path.startswith('/ermrest/'):
+            delimiter = '?'
+            try:
+                o = urlparse.urlparse(url)
+                if o.query != '':
+                    delimiter = '&'
+                ret = '%s%scid=iobox' % (url, delimiter)
+            except:
+                pass
+        return ret
+
+    """
     Send a request.
     """
     def send_request(self, method, url, body='', headers={}, sendData=False, ignoreErrorCodes=[], webapp='HATRAC'):
         try:
+            url = self.url_cid(url)
             if self.header:
                 headers.update(self.header)
             serviceconfig.logger.debug('Sending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
