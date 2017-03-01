@@ -237,7 +237,10 @@ class Workflow(object):
                     except:
                         value = templates[template]
                     if value == None:
-                        del outputDict[template]
+                        try:
+                            del outputDict[template]
+                        except:
+                            pass
                     else:
                         outputDict.update({'%s%s' % (prefix, template): value})
             elif disposition['handler'] == 'datetime':
@@ -299,7 +302,19 @@ class Workflow(object):
                     
                     if val1 != val2:
                         continue
+                        
+                exists = disposition.get('exists', None)
+                if exists != None:
+                    try:
+                        val1 = exists % outputDict
+                    except KeyError:
+                        val1 = None
+                    except:
+                        pass
                     
+                    if val1 == None:
+                        continue
+                        
                 method = disposition.get('method', None)
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
                 unique_columns = disposition.get('unique_columns', [])
@@ -331,6 +346,8 @@ class Workflow(object):
                             value = colmap[col] % outputDict
                         except:
                             value = colmap[col]
+                            if value != None and value.startswith('%(') and value.endswith(')s'):
+                                value = None
                         cols.update({col: value})
                     """
                     Add the missing columns with NULL values
