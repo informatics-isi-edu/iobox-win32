@@ -346,8 +346,12 @@ class Workflow(object):
                             value = colmap[col] % outputDict
                         except:
                             value = colmap[col]
-                            if value != None and value.startswith('%(') and value.endswith(')s'):
-                                value = None
+                            if value != None:
+                                try:
+                                    if value.startswith('%(') and value.endswith(')s'):
+                                        value = None
+                                except:
+                                    pass
                         cols.update({col: value})
                     """
                     Add the missing columns with NULL values
