@@ -452,7 +452,7 @@ The sample is using the following:
    - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
      be deleted only if their relative path matches any of the patterns of `dir_cleanup_patterns`. By default, 
      all the empty subdirectories of the `inbox` will be deleted. It propagates to the inner rules. An inner rule might 
-     overwrite it; however, that will apply ** only to the failure cases**.
+     overwrite it; however, that will apply **only to the failure cases**.
    - **workflow_files**: specifies a list of files, each containing a workflow in JSON format for a monitored directory.
      The files names should specify the full path. 
      The workflows are appended to the list of **monitored_dirs**.
