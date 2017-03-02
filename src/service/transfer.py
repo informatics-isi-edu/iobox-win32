@@ -114,7 +114,7 @@ class Workflow(object):
         rule = self.findRule(filename, fromDir)
         if rule:
             try:
-                self.applyDisposition(fromDir, rule, dict(), False, [])
+                self.applyDisposition(fromDir, rule, dict(), False, ['.*'], [])
             except:
                 et, ev, tb = sys.exc_info()
                 serviceconfig.logger.error('got Processing exception during applyDisposition "%s"' % str(ev))
@@ -162,12 +162,12 @@ class Workflow(object):
     """
     Apply the dispositions of the rule.
     """
-    def applyDisposition(self, fromDir, rule, outputDict, isInnerRule, results):
+    def applyDisposition(self, fromDir, rule, outputDict, isInnerRule, dir_cleanup_patterns, results):
         if len(outputDict) == 0:
             outputDict.update({'basename': self.basicDict['basename'](self.filename)})
             outputDict.update({'nbytes': self.basicDict['nbytes'](self.filename)})
         complete = True
-        dir_cleanup_patterns = rule.get('dir_cleanup_patterns', ['.*'])
+        dir_cleanup_patterns = rule.get('dir_cleanup_patterns', dir_cleanup_patterns)
         for disposition in rule['disposition']:
             if disposition['handler'] == 'patterngroups':
                 """
@@ -187,7 +187,7 @@ class Workflow(object):
                 inner_rule = self.findInnerRule(disposition.get('rules', []), fromDir)
                 if inner_rule != None:
                     inner_results = []
-                    self.applyDisposition(fromDir, inner_rule, outputDict, True, inner_results)
+                    self.applyDisposition(fromDir, inner_rule, outputDict, True, dir_cleanup_patterns, inner_results)
                     if 'failure' in inner_results:
                         results.append('failure')
                         complete = False
@@ -305,14 +305,20 @@ class Workflow(object):
                         
                 exists = disposition.get('exists', None)
                 if exists != None:
-                    try:
-                        val1 = exists % outputDict
-                    except KeyError:
-                        val1 = None
-                    except:
-                        pass
+                    hasNone = False
+                    for val in exists:
+                        try:
+                            val1 = val % outputDict
+                        except KeyError:
+                            val1 = None
+                        except:
+                            pass
                     
-                    if val1 == None:
+                        if val1 == None:
+                            hasNone = True
+                            break
+                        
+                    if hasNone == True:
                         continue
                         
                 method = disposition.get('method', None)
