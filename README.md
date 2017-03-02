@@ -350,6 +350,7 @@ Below is a sample of an configuration file. It:
 						{
 
 							"handler": "ermrest",
+							"exists": ["%(encode.sha256)s", "%(encode.slideid)s"],
 							"method": "GET",
 							"webconn": "foo",
 							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
@@ -450,7 +451,8 @@ The sample is using the following:
      By default, the pattern is applied to the basename of the file.
    - **dir_cleanup_patterns**: if present, it contains an array of patterns. Empty subdirectories of the `inbox` will 
      be deleted only if their relative path matches any of the patterns of `dir_cleanup_patterns`. By default, 
-     all the empty subdirectories of the `inbox` will be deleted.
+     all the empty subdirectories of the `inbox` will be deleted. It propagates to the inner rules. An inner rule might 
+     overwrite it; however, that will apply ** only to the failure cases**.
    - **workflow_files**: specifies a list of files, each containing a workflow in JSON format for a monitored directory.
      The files names should specify the full path. 
      The workflows are appended to the list of **monitored_dirs**.
@@ -480,7 +482,8 @@ The sample is using the following:
    - **"handler": "ermrest"** with `"method": "POST"`. The `condition` specifies that the `id` got
      from the previous `GET` request must be `NULL` in order the `POST` request to be executed. The `colmap`
      specifies the columns that will be updated. The **warn_on_duplicates** parameter 
-     specifies that duplicates detected at `ermrest` will be notified through the email.
+     specifies that duplicates detected at `ermrest` will be notified through the email. The `exists` attribute 
+     specifies an array whose all elements which must be **NOT NULL** in order to execute the ermrest request.
    - **"handler": "hatrac"**: Uploads the file in chunks and creates the
      parent namespaces if absent. If present, the **content_disposition** parameter specifies
      the name with which the file will be downloaded. In case of failure, the file will be moved to
