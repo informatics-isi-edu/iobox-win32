@@ -160,6 +160,24 @@ class Workflow(object):
         return ret
 
     """
+    Update the output dictionary with the values returned by a GET, POST or PUT request.
+    The update will occur only if a single row is returned.
+    """
+    def updateDictionary(self, rows, outputDict):
+        if len(rows) == 1:
+            row = rows[0]
+            for col in row.keys():
+                outputDict.update({col: row[col]})
+                outputDict.update({'encode.%s' % col: self.basicDict['urlQuote'](col, safe='')})
+                value = row[col]
+                if value != None:
+                    try:
+                        value = self.basicDict['urlQuote'](value, safe='')
+                    except:
+                        pass
+                outputDict.update({'encode.value.%s' % col: value})
+
+    """
     Apply the dispositions of the rule.
     """
     def applyDisposition(self, fromDir, rule, outputDict, isInnerRule, dir_cleanup_patterns, results):
@@ -421,19 +439,8 @@ class Workflow(object):
                     try:
                         resp = webcli.send_request('GET', self.basicDict['urlPath'](url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                         rows = json.load(resp)
-                        if len(rows) == 1:
-                            row = rows[0]
-                            for col in row.keys():
-                                outputDict.update({col: row[col]})
-                                outputDict.update({'encode.%s' % col: self.basicDict['urlQuote'](col, safe='')})
-                                value = row[col]
-                                if value != None:
-                                    try:
-                                        value = self.basicDict['urlQuote'](value, safe='')
-                                    except:
-                                        pass
-                                outputDict.update({'encode.value.%s' % col: value})
-                        else:
+                        self.updateDictionary(rows, outputDict)
+                        if len(rows) != 1:
                             serviceconfig.logger.debug('GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
                             if '*' not in continueAfter and (len(rows) != 0 or 'ZERO_RESULT' not in continueAfter):
                                 serviceconfig.sendMail('ERROR', 'ERMREST GET FAILURE: Invalid number of rows returned', 'GET request "%s" for file "%s" has returned %d rows' % (url, self.filename, len(rows)))
@@ -467,14 +474,16 @@ class Workflow(object):
                     success=False
                     try:
                         if method in ['POST', 'PUT']:
-                            headers = {'Content-Type': 'text/csv'}
+                            headers = {'Content-Type': 'text/csv', 'Accept': 'application/json'}
                         else:
                             headers = {'Content-Type': 'application/json'}
                             body = json.dumps(body)
                         if method == 'POST':
                             ignoreErrorCodes = []
                         resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes, webapp='ERMREST')
-                        resp.read()
+                        #resp.read()
+                        rows = json.load(resp)
+                        self.updateDictionary(rows, outputDict)
                         success = True
                         serviceconfig.sendMail('INFO', 'ERMREST %s SUCCESS' % method, '%s: %s\n%s' % (method, url, body))
                     except ErmrestHTTPException, e:
