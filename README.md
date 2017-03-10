@@ -398,7 +398,7 @@ Example of a credentials file:
 {
 	"username": "my_user_name",
 	"password": "my_password",
-	"cookie": "ermrest=..."
+	"cookie": "webauthn=..."
 }
 
 ```
@@ -483,7 +483,9 @@ The sample is using the following:
      from the previous `GET` request must be `NULL` in order the `POST` request to be executed. The `colmap`
      specifies the columns that will be updated. The **warn_on_duplicates** parameter 
      specifies that duplicates detected at `ermrest` will be notified through the email. The `exists` attribute 
-     specifies an array whose all elements which must be **NOT NULL** in order to execute the ermrest request.
+     specifies an array whose all elements which must be **NOT NULL** in order to execute the ermrest request. 
+     If the `POST` response contains just one row, the Python dictionary is updated with the columns and values 
+     returned by the row.
    - **"handler": "hatrac"**: Uploads the file in chunks and creates the
      parent namespaces if absent. If present, the **content_disposition** parameter specifies
      the name with which the file will be downloaded. In case of failure, the file will be moved to
@@ -503,7 +505,8 @@ The sample is using the following:
      The `target_columns` specifies the columns that will be updated. The 
      `Probe` attribute returned from the previous **ermrest** handler with 
      the `GET` method is used here to populate the `Probe` column of the 
-     `Scan` table.
+     `Scan` table. If the `PUT` response contains just one row, the Python dictionary is updated 
+     with the columns and values returned by the row.
 
 ## Troubleshooting
 
