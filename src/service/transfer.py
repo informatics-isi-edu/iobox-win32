@@ -342,13 +342,20 @@ class Workflow(object):
                 method = disposition.get('method', None)
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
                 unique_columns = disposition.get('unique_columns', [])
-                url = disposition.get('url', None) % outputDict
+                url_path = disposition.get('url_path', None)
+                if url_path != None:
+                    url_path = url_path % outputDict
+                    url = url_path
+                else:
+                    url = disposition.get('url', None)
+                    if url != None:
+                        url = url % outputDict
                 failure = disposition.get('failure', None)
                 webcli = None
                 webconn = disposition.get('webconn', None)
                 if webconn != None:
                     webcli = self.clients.get(webconn, None)
-                if webcli == None:
+                if webcli == None or url == None:
                     serviceconfig.sendMail('ERROR', 'ERMREST FAILURE: No Web Connection.', 'Web Connection for ERMREST does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for ERMREST does not exist')
                     complete = False
@@ -380,7 +387,7 @@ class Workflow(object):
                     """
                     Add the missing columns with NULL values
                     """
-                    columns_url = self.getTableColumnsURL(self.basicDict['urlPath'](url))
+                    columns_url = self.getTableColumnsURL(self.basicDict['urlPath'](url, url_path))
                     if columns_url != None and webcli != None:
                         status = 'failure'
                         try:
@@ -437,7 +444,7 @@ class Workflow(object):
                     be stored in the outputDict
                     """
                     try:
-                        resp = webcli.send_request('GET', self.basicDict['urlPath'](url), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
+                        resp = webcli.send_request('GET', self.basicDict['urlPath'](url, url_path), headers={'Content-Type': 'application/json'}, webapp='ERMREST')
                         rows = json.load(resp)
                         self.updateDictionary(rows, outputDict)
                         if len(rows) != 1:
@@ -480,7 +487,7 @@ class Workflow(object):
                             body = json.dumps(body)
                         if method == 'POST':
                             ignoreErrorCodes = []
-                        resp = webcli.send_request(method, self.basicDict['urlPath'](url), body, headers, ignoreErrorCodes=ignoreErrorCodes, webapp='ERMREST')
+                        resp = webcli.send_request(method, self.basicDict['urlPath'](url, url_path), body, headers, ignoreErrorCodes=ignoreErrorCodes, webapp='ERMREST')
                         #resp.read()
                         rows = json.load(resp)
                         self.updateDictionary(rows, outputDict)
@@ -492,7 +499,7 @@ class Workflow(object):
                             Check if the CONFLICT is due to duplicates
                             """
                             try:
-                                url = self.basicDict['urlPath'](url)
+                                url = self.basicDict['urlPath'](url, url_path)
                                 if len(unique_columns)==0:
                                     """
                                     Unique columns are not specified in the ermrest handler.
@@ -557,9 +564,17 @@ class Workflow(object):
                 """
                 digest = disposition.get('digest', ['md5'])
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
-                url = disposition.get('url', None) % outputDict
-                o = urlparse.urlparse(url)
-                object_url = o.path
+                object_url = disposition.get('url_path', None)
+                if object_url != None:
+                    object_url = object_url % outputDict
+                    url = object_url
+                    o = urlparse.urlparse(url)
+                else:
+                    url = disposition.get('url', None)
+                    if url != None:
+                        url = url % outputDict
+                        o = urlparse.urlparse(url)
+                        object_url = o.path
                 chunk_size = disposition.get('chunk_size', 10000000)
                 failure = disposition.get('failure', None)
                 content_disposition = disposition.get('content_disposition', None)
@@ -569,7 +584,7 @@ class Workflow(object):
                 webconn = disposition.get('webconn', None)
                 if webconn != None:
                     webcli = self.clients.get(webconn, None)
-                if webcli == None:
+                if webcli == None or object_url == None:
                     serviceconfig.sendMail('ERROR', 'HATRAC FAILURE: No Web Connection.', 'Web Connection for HATRAC does not exist.')
                     self.reportAction(self.filename, 'failure', 'Web Connection for HATRAC does not exist')
                     complete = False

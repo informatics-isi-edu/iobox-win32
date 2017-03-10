@@ -203,13 +203,16 @@ class ObserverManager(object):
     """
     Get the path from the URL.
     """
-    def urlPath(self, uri):
-        o = urlparse.urlparse(uri)
-        index = uri.find(o.path)
-        if index >= 0:
-            return uri[index:]
+    def urlPath(self, uri, uri_path):
+        if uri_path != None:
+            return uri_path
         else:
-            return ''
+            o = urlparse.urlparse(uri)
+            index = uri.find(o.path)
+            if index >= 0:
+                return uri[index:]
+            else:
+                return ''
         
     """
     Get the file size.
