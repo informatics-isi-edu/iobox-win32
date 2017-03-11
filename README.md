@@ -330,7 +330,7 @@ Below is a sample of an configuration file. It:
 							"method": "GET",
 							"webconn": "foo",
 							"continueAfter": ["*"],
-							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
+							"url_path": "/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
 
 						},
 						{
@@ -345,7 +345,7 @@ Below is a sample of an configuration file. It:
 								"filename": "%(basename)s"
 							},
 							"webconn": "foo",
-							"url": "https://foo.org/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
+							"url_path": "/ermrest/catalog/1/entity/%(encode.schema)s:%(encode.table)s"
 						},
 						{
 
@@ -353,7 +353,7 @@ Below is a sample of an configuration file. It:
 							"exists": ["%(encode.sha256)s", "%(encode.slideid)s"],
 							"method": "GET",
 							"webconn": "foo",
-							"url": "https://foo.org/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
+							"url_path": "/ermrest/catalog/1/attribute/%(encode.schema)s:%(encode.table)s/checksum=%(encode.sha256)s&slide_id=%(encode.slideid)s/id,Disambiguator"
 						},
 						{
 							"handler": "templates",
@@ -368,7 +368,7 @@ Below is a sample of an configuration file. It:
     						"chunk_size": 10000000,
     						"content_disposition": "filename*=UTF-8''%(basename)s",
 							"webconn": "foo",
-							"url": "https://foo.org/hatrac/%(objname)s",
+							"url_path": "/hatrac/%(objname)s",
 							"create_parents": true,
 							"failure": "transfer"
 						},
@@ -381,7 +381,7 @@ Below is a sample of an configuration file. It:
 								"bytes": "%(nbytes)d"
 							},
 							"webconn": "foo",
-							"url": "https://foo.org/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/id;filename,bytes"
+							"url_path": "/ermrest/catalog/1/attributegroup/%(encode.schema)s:%(encode.table)s/id;filename,bytes"
 						}
 					]
 				}
@@ -418,8 +418,10 @@ The sample is using the following:
        - **receiver**: the receiver of the mails.
        - **actions**: an array having any combination of the "INFO", "WARNING" and "ERROR" elements. The default is ["INFO", "WARNING", "ERROR"]. The sample will email only ERROR messages.
    - **connections**: defines the Web connections to be used by the **ermrest** and **hatrac** handlers. 
-     The connection is identified by a name that might be referred in those handlers. The parameter **credentials** points to a JSON file that contains 
-     the  credential information. 
+     The connection is identified by a name that is referred in those handlers. The parameter **credentials** points to a JSON file that contains 
+     the  credential information. The `ermrest` and `hatrac` handlers are specifying also the `url_path` and/or `url` attributes. 
+     The request will be sent using the connection specified by the `webconn` attribute and the URL path provided by the `url_path` attribute or 
+     extracted from the `url` attribute. If present, the `url_path` attribute will be used; otherwise the path extracted from the `url` attribute.
    - **report**: if present, it should specify that daily activity reports should be submitted by email. Its structure consists of:
      - **output**: the directory where the daily reports are generated
      - **prefix**: the prefix of the report file. The default is `Report`. The report file names follow the pattern `<prefix>.YYYY-MM-DD.csv`, where `YYYY-MM-DD` is its creation date.
