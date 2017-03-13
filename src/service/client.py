@@ -303,9 +303,9 @@ class ErmrestClient (object):
     """
     Upload a file.
     """
-    def uploadFile(self, object_url, filePath, chunk_size, content_disposition, digest):
+    def uploadFile(self, object_url, filePath, chunk_size, metadata):
         try:
-            job_id = self.createUploadJob(object_url, filePath, chunk_size, content_disposition, digest)
+            job_id = self.createUploadJob(object_url, filePath, chunk_size, metadata)
             self.chunksUpload(object_url, filePath, job_id, chunk_size)
             res = self.chunksUploadFinalization(object_url, job_id)
             return (job_id, 'SUCCEEDED', res.strip())
@@ -335,16 +335,18 @@ class ErmrestClient (object):
     """
     Create a job for uploading a file.
     """
-    def createUploadJob(self, object_url, filePath, chunk_size, content_disposition, digest):
+    def createUploadJob(self, object_url, filePath, chunk_size, metadata):
         try:
-            if 'md5' in digest and 'sha256' in digest:
-                md5,sha256 = self.basicDict['content_digest'](filePath, chunk_size)
-                content_digest = {"content-md5": md5,
+            checksum = metadata['checksum']
+            content_disposition = metadata.get('content_disposition', None)
+            if 'md5' in checksum and 'sha256' in checksum:
+                md5,sha256 = self.basicDict['content_checksum'](filePath, chunk_size)
+                content_checksum = {"content-md5": md5,
                                   "content-sha256": sha256}
-            elif 'sha256' in digest:
-                content_digest = {"content-sha256": self.basicDict['sha256base64'](filePath, chunk_size)}
+            elif 'sha256' in checksum:
+                content_checksum = {"content-sha256": self.basicDict['sha256base64'](filePath, chunk_size)}
             else:
-                content_digest = {"content-md5": self.basicDict['md5sum'](filePath, chunk_size)}
+                content_checksum = {"content-md5": self.basicDict['md5sum'](filePath, chunk_size)}
             file_size = os.path.getsize(filePath)
             url = '%s;upload' % object_url
             headers = {'Content-Type': 'application/json'}
@@ -358,7 +360,7 @@ class ErmrestClient (object):
             obj = {"chunk-length": chunk_size,
                    "content-length": file_size,
                    "content-type": content_type}
-            obj.update(content_digest)
+            obj.update(content_checksum)
             if content_disposition != None:
                 obj['content-disposition'] = content_disposition
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)

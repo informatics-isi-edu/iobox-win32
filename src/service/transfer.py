@@ -562,7 +562,25 @@ class Workflow(object):
                 """
                 Upload the file.
                 """
-                digest = disposition.get('digest', ['md5'])
+                metadata = disposition.get('metadata', {})
+                if len(metadata) == 0:
+                    checksum = disposition.get('checksum', [])
+                    if 'md5' not in checksum:
+                        checksum.append('md5')
+                    metadata.update({"checksum": checksum})
+                    content_disposition = disposition.get('content_disposition', None)
+                    if content_disposition != None:
+                        content_disposition = content_disposition % outputDict
+                        metadata.update({"content_disposition": content_disposition})
+                else:
+                    checksum = metadata.get('checksum', [])
+                    if 'md5' not in checksum:
+                        checksum.append('md5')
+                    metadata.update({"checksum": checksum})
+                    content_disposition = metadata.get('content_disposition', None)
+                    if content_disposition != None:
+                        content_disposition = content_disposition % outputDict
+                        metadata.update({"content_disposition": content_disposition})
                 warn_on_duplicates = disposition.get('warn_on_duplicates', False)
                 object_url = disposition.get('url_path', None)
                 if object_url != None:
@@ -577,9 +595,6 @@ class Workflow(object):
                         object_url = o.path
                 chunk_size = disposition.get('chunk_size', 10000000)
                 failure = disposition.get('failure', None)
-                content_disposition = disposition.get('content_disposition', None)
-                if content_disposition != None:
-                    content_disposition = content_disposition % outputDict
                 webcli = None
                 webconn = disposition.get('webconn', None)
                 if webconn != None:
@@ -655,7 +670,7 @@ class Workflow(object):
                         self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
                         break
                 try:
-                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size, content_disposition, digest)
+                    job_id, status, hatrac_location = webcli.uploadFile(object_url, self.filename, chunk_size, metadata)
                     outputDict.update({'hatrac_location': hatrac_location})
                     serviceconfig.logger.debug('hatrac_location: "%s"' % (hatrac_location))
                     serviceconfig.sendMail('INFO', 'HATRAC SUCCESS', 'File "%s" was uploaded at "%s"' % (self.filename, object_url))

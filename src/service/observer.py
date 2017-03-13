@@ -73,7 +73,7 @@ class ObserverManager(object):
         self.basicDict.update({'sha256sum': self.sha256sum})
         self.basicDict.update({'md5sum': self.md5sum})
         self.basicDict.update({'sha256base64': self.sha256base64})
-        self.basicDict.update({'content_digest': self.content_digest})
+        self.basicDict.update({'content_checksum': self.content_checksum})
         self.basicDict.update({'patterngroups': self.patterngroups})
         self.basicDict.update({'urlQuote': urllib.quote})
         self.basicDict.update({'urlPath': self.urlPath})
@@ -283,7 +283,7 @@ class ObserverManager(object):
     """
     Get the base64 digest strings like the sha256 and the md5 utilities would compute.
     """
-    def content_digest(self, fpath, chunk_size):
+    def content_checksum(self, fpath, chunk_size):
         hmd5 = hashlib.md5()
         hsha256 = hashlib.sha256()
         try:
