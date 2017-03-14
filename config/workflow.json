@@ -46,7 +46,9 @@
 					"handler": "hatrac",
 					"chunk_size": 10000000,
 					"webconn": "foo",
-					"content_disposition": "filename*=UTF-8''test.txt",
+					"metadata": {
+						"content_disposition": "filename*=UTF-8''test.txt"
+					},
 					"url_path": "/hatrac/%(objname)s",
 					"create_parents": true,
 					"failure": "transfer"

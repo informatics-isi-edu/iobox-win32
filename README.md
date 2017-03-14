@@ -364,9 +364,11 @@ Below is a sample of an configuration file. It:
 						{
 							"handler": "hatrac",
 							"warn_on_duplicates": true,
-							"digest": ["md5", "sha256"],
+							"metadata": {
+								"checksum": ["sha256"],
+								"content_disposition": "filename*=UTF-8''%(basename)s"
+							},
     						"chunk_size": 10000000,
-    						"content_disposition": "filename*=UTF-8''%(basename)s",
 							"webconn": "foo",
 							"url_path": "/hatrac/%(objname)s",
 							"create_parents": true,
@@ -489,10 +491,15 @@ The sample is using the following:
      If the `POST` response contains just one row, the Python dictionary is updated with the columns and values 
      returned by the row.
    - **"handler": "hatrac"**: Uploads the file in chunks and creates the
-     parent namespaces if absent. If present, the **content_disposition** parameter specifies
-     the name with which the file will be downloaded. In case of failure, the file will be moved to
+     parent namespaces if absent. If present, the **metadata** attribute specifies the fields 
+     that will be sent to the `hatrac` metadata. The currently recognized field names are 
+     **checksum** and **content_disposition**. The **checksum** value is an array where valid values are 
+     `sha256` and/or `md5`. If present, the **content_disposition** parameter specifies
+     the name with which the file will be downloaded. For backup compatibility, the **checksum** and 
+     **content_disposition** are still supported as distinct attributes in the `hatrac` handler. 
+     The **metadata** attribute has precedence in that case. In case of failure, the file will be moved to
      the `transfer` directory. The **warn_on_duplicates** parameter specifies 
-     that duplicates detected at `hatrac` will be notified through the email. The **digest** 
+     that duplicates detected at `hatrac` will be notified through the email. The **checksum** 
      attribute, if present, contains an array having as valid values `md5` and/or `sha256`. 
      The default is `md5`. It sets in `hatrac` the metadata for the `content-md5` and `content-sha256` attributes.
    - **"handler": "ermrest"** with `"method": "GET"`. The request must return 
