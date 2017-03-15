@@ -75,6 +75,7 @@ class ObserverManager(object):
         self.basicDict.update({'sha256base64': self.sha256base64})
         self.basicDict.update({'content_checksum': self.content_checksum})
         self.basicDict.update({'patterngroups': self.patterngroups})
+        self.basicDict.update({'template_match': self.template_match})
         self.basicDict.update({'urlQuote': urllib.quote})
         self.basicDict.update({'urlPath': self.urlPath})
         
@@ -199,6 +200,15 @@ class ObserverManager(object):
            return ret
         else:
             return None
+        
+    """
+    Get the template match.
+    """
+    def template_match(self, pattern, source, relpath_matching):
+        if relpath_matching == True:
+            source = source.replace("\\","/")
+        m = re.search(pattern, source)
+        return m
         
     """
     Get the path from the URL.

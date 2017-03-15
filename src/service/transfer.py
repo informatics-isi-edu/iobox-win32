@@ -198,6 +198,72 @@ class Workflow(object):
                 if groups:
                     for group in groups.keys():
                         outputDict.update({group: groups[group]})
+            elif disposition['handler'] == 'template_pattern':
+                """
+                Match a string against a pattern.
+                If matched:
+                    - update the output dictionary with the groups
+                    - execute the if_match disposition (if present)
+                Else:
+                    - execute the if_zero_match disposition (if present) or
+                    - reject if the 'failure' attribute is present 
+                """
+                source = disposition.get('source', None)
+                if source != None:
+                    source = source % outputDict
+                else:
+                    serviceconfig.logger.error('The "source" attribute is not specified in the "template_pattern" handler.')
+                    serviceconfig.sendMail('ERROR', 'Bad template_pattern handler', 'The "source" attribute is not specified in the "template_pattern" handler.')
+                    self.reportAction(self.filename, 'failure', 'Bad template_pattern handler')
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    complete = False
+                    break
+                pattern = disposition.get('pattern', None)
+                if pattern != None:
+                    pattern = pattern % outputDict
+                else:
+                    serviceconfig.logger.error('The "pattern" attribute is not specified in the "template_pattern" handler.')
+                    serviceconfig.sendMail('ERROR', 'Bad template_pattern handler', 'The "pattern" attribute is not specified in the "template_pattern" handler.')
+                    self.reportAction(self.filename, 'failure', 'Bad template_pattern handler')
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    complete = False
+                    break
+                relpath_matching = disposition.get('relpath_matching', False)
+                m = self.basicDict['template_match'](pattern, source, relpath_matching)
+                if m != None:
+                    groups = disposition.get('output', None)
+                    if groups == 'groups':
+                       for group in m.groupdict():
+                           outputDict.update({'%s' % (group): m.group(group)})
+                    inner_rule = disposition.get('if_match', None)
+                    if inner_rule != None:
+                        inner_results = []
+                        self.applyDisposition(fromDir, inner_rule, outputDict, True, dir_cleanup_patterns, inner_results)
+                        if 'failure' in inner_results:
+                            results.append('failure')
+                            complete = False
+                            break
+                else:
+                    inner_rule = disposition.get('if_zero_match', None)
+                    if inner_rule != None:
+                        inner_results = []
+                        self.applyDisposition(fromDir, inner_rule, outputDict, True, dir_cleanup_patterns, inner_results)
+                        if 'failure' in inner_results:
+                            results.append('failure')
+                            complete = False
+                            break
+                    else:
+                        failure = disposition.get('failure', None)
+                        if failure != None:
+                            serviceconfig.logger.error('Zero matches found in the "template_pattern" handler.')
+                            serviceconfig.sendMail('ERROR', 'Zero matches found in the template_pattern handler', 'Zero matches found in the template_pattern handler')
+                            self.reportAction(self.filename, 'failure', 'Zero matches found in the template_pattern handler')
+                            self.moveFile(self.filename, failure, fromDir, dir_cleanup_patterns)
+                            results.append('failure')
+                            complete = False
+                            break
             elif disposition['handler'] == 'rules':
                 """
                 Execute an inner rule.
