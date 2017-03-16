@@ -517,6 +517,48 @@ The sample is using the following:
      `Scan` table. If the `PUT` response contains just one row, the Python dictionary is updated 
      with the columns and values returned by the row.
 
+###  Pattern Conditional
+
+A special handler **template_pattern**  allows a new round of regular expression matches and pattern-group expansion into the environment.
+
+The handler has the following structure:
+
+```
+{
+	"handler": "template_pattern",
+	"source": "template",
+	"pattern": "regular expression",
+	"output": "groups",
+	"relpath_matching": true,
+	"if_match": {
+		"disposition": [...]
+	},
+	"if_zero_match": {
+		"disposition": [...]
+	},
+	"failure": "failure"
+}
+```
+
+The `source` and `pattern` attributes are required, while all the others are optional.
+
+The source `template` is expanded to get the source string. If the `relpath_matching` attribute is present and equal to `true`, then the `\` from the source are replaced by `/` before the matching attempt.
+
+If the matching succeeds, then:
+
+1. If the `output` attribute is present and equal to `groups`, then add the matched groups to the output environment.
+2. If the `if_match` attribute is present, then execute the inner `disposition` with the caller environment.
+
+If the matching does **not** succeed, then:
+
+1. If the `if_zero_match` attribute is present, then execute the inner `disposition` with the caller environment. 
+2. If the `if_zero_match` attribute is **not** present, and the `failure` attribute is present, then execute the action designated by the `failure` attribute.
+
+From a local perspective, this allows more general if-then trees to be configured by recursively invoking a whole disposition chain. 
+
+A usage sample can be viewed at [template_pattern.conf](https://github.com/informatics-isi-edu/iobox-win32/blob/master/config/template_pattern.conf).
+
+
 ## Troubleshooting
 
 Normally, the application will end gracefully once the service is stopped. 
