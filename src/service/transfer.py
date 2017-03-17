@@ -498,6 +498,12 @@ class Workflow(object):
                             value = colmap[col] % outputDict
                         except:
                             value = colmap[col]
+                            if value != None:
+                                try:
+                                    if value.startswith('%(') and value.endswith(')s'):
+                                        value = None
+                                except:
+                                    pass
                         cols.update({col: value})
                     body.append(cols)
                     body = self.json2csv(body)
