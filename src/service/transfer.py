@@ -320,6 +320,12 @@ class Workflow(object):
                         value = templates[template] % outputDict
                     except:
                         value = templates[template]
+                    if value != None:
+                        try:
+                            if value.startswith('%(') and value.endswith(')s'):
+                                value = None
+                        except:
+                            pass
                     if value == None:
                         try:
                             del outputDict[template]
