@@ -313,6 +313,24 @@ class Workflow(object):
                 """
                 Add the templates.
                 """
+                exists = disposition.get('exists', None)
+                if exists != None:
+                    hasNone = False
+                    for val in exists:
+                        try:
+                            val1 = val % outputDict
+                        except KeyError:
+                            val1 = None
+                        except:
+                            pass
+                    
+                        if val1 == None:
+                            hasNone = True
+                            break
+                        
+                    if hasNone == True:
+                        continue
+                        
                 prefix = disposition.get('prefix', '') % outputDict
                 templates = disposition['output']
                 for template in templates.keys():
