@@ -185,10 +185,11 @@ class ErmrestClient (object):
     """
     def send_request(self, method, url, body='', headers={}, sendData=False, ignoreErrorCodes=[], webapp='HATRAC'):
         try:
+            request_headers = headers.copy()
             url = self.url_cid(url)
             if self.header:
                 headers.update(self.header)
-            serviceconfig.logger.debug('Sending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
+            serviceconfig.logger.debug('Sending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, request_headers))
             retry = False
             try:
                 if sendData == False:
@@ -236,7 +237,7 @@ class ErmrestClient (object):
                 self.close()
                 self.connect()
                 serviceconfig.sendMail('NOTICE', '%s WARNING: The HTTPSConnection has been restarted' % webapp, 'HTTP exception: %d.\nThe HTTPSConnection has been restarted on "%s://%s".\n' % (resp.status, self.scheme, self.host))
-                serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, headers))
+                serviceconfig.logger.debug('Resending request: method="%s", url="%s://%s%s", headers="%s"' % (method, self.scheme, self.host, url, request_headers))
                 if sendData == False:
                     self.webconn.request(method, url, body, headers)
                 else:
