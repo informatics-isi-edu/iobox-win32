@@ -364,6 +364,7 @@ class ErmrestClient (object):
             obj.update(content_checksum)
             if content_disposition != None:
                 obj['content-disposition'] = content_disposition
+            serviceconfig.logger.debug('hatrac metadata: "%s"\n' % (json.dumps(obj)))
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
             job_id = res.split('/')[-1][:-1]

@@ -658,7 +658,7 @@ class Workflow(object):
                 """
                 Upload the file.
                 """
-                metadata = disposition.get('metadata', {})
+                metadata = disposition.get('metadata', {}).copy()
                 if len(metadata) == 0:
                     checksum = disposition.get('checksum', [])
                     if 'md5' not in checksum:
