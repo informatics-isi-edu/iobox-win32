@@ -442,9 +442,15 @@ class ErmrestClient (object):
         """
         Retrieve the object hatrac location.
         """
-        url = '%s;versions' % (object_url)
-        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-        resp = self.send_request('GET', url, '', headers, False)
-        versions = json.loads(resp.read())
-        return versions[0]
+        ret = None
+        url = '%s' % (object_url)
+        if url != None:
+            headers = {'Accept': '*'}
+            try:
+                resp = self.send_request('HEAD', url, headers=headers, ignoreErrorCodes=[NOT_FOUND])
+                resp.read()
+                ret = resp.getheader('content-location', None)
+            except:
+                pass
+        return ret
 
