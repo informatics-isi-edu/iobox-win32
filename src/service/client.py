@@ -31,6 +31,7 @@ import hashlib
 import socket
 import errno
 import mimetypes
+import re
 
 class ErmrestHTTPException(Exception):
     def __init__(self, value, status, retry=False):
@@ -334,6 +335,27 @@ class ErmrestClient (object):
         return ret
                 
     """
+    Encode the content-disposition.
+    """
+    def encode_disposition(self, orig):
+        m = re.match("^filename[*]=UTF-8''(?P<name>[-_.~A-Za-z0-9%]+)$", orig)
+        if m:
+            return orig
+        elif not orig.startswith("filename*=UTF-8''"):
+            raise ValueError('Cannot accept content-disposition "%s"; it must start with "filename*=UTF-8\'\'".' % orig)
+        else:
+            ret = ["filename*=UTF-8''"]
+            for c in orig[len("filename*=UTF-8''"):]:
+                m = m = re.match("(?P<name>[-_.~A-Za-z0-9%]+)$", c)
+                if m:
+                    ret.append(c)
+                else:
+                    #In case we want an URL encoding
+                    #ret.append('%%%s' % c.encode('hex').upper())
+                    ret.append('_')
+            return ''.join(ret)
+
+    """
     Create a job for uploading a file.
     """
     def createUploadJob(self, object_url, filePath, chunk_size, metadata):
@@ -363,7 +385,7 @@ class ErmrestClient (object):
                    "content-type": content_type}
             obj.update(content_checksum)
             if content_disposition != None:
-                obj['content-disposition'] = content_disposition
+                obj['content-disposition'] = self.encode_disposition(content_disposition)
             serviceconfig.logger.debug('hatrac metadata: "%s"\n' % (json.dumps(obj)))
             resp = self.send_request('POST', url, body=json.dumps(obj), headers=headers)
             res = resp.read()
