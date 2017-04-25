@@ -558,6 +558,38 @@ From a local perspective, this allows more general if-then trees to be configure
 
 A usage sample can be viewed at [template_pattern.conf](https://github.com/informatics-isi-edu/iobox-win32/blob/master/config/template_pattern.conf).
 
+###  Pattern Substitute
+
+The **template_replace** handler allows replacing in a string the occurrences identified by a pattern with a replacement value.
+
+The handler has the following structure:
+
+```
+{
+	"handler": "template_replace",
+	"source": "input string",
+	"pattern": "regular expression",
+	"replacement": "replacement value"
+}
+```
+
+All the attributes are required. The new string resulted as the replacement operation will be stored in the Python dictionary under the `replace.result` key and can be referred by the subsequence handlers. 
+
+Example:
+
+```
+{
+	"handler": "template_replace",
+	"source": "sample#1.txt",
+	"pattern": "[^-_.~A-Za-z0-9%]+",
+	"replacement": "_"
+}
+```
+
+The handler will replace in the `sample#1.txt` string any character that is identified by the `[^-_.~A-Za-z0-9%]+` pattern, with the `_` character. 
+
+In our case, the result string will be `sample_1.txt` and it will be stored in the Python dictionary under the `replace.result` key.
+
 
 ## Troubleshooting
 
