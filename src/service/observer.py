@@ -76,6 +76,7 @@ class ObserverManager(object):
         self.basicDict.update({'content_checksum': self.content_checksum})
         self.basicDict.update({'patterngroups': self.patterngroups})
         self.basicDict.update({'template_match': self.template_match})
+        self.basicDict.update({'template_replace': self.template_replace})
         self.basicDict.update({'urlQuote': urllib.quote})
         self.basicDict.update({'urlPath': self.urlPath})
         
@@ -84,13 +85,15 @@ class ObserverManager(object):
     """
     def load(self):
         if self.connections == None:
+            serviceconfig.logger.debug('The "connections" attribute was not specified in the configuration file.')
+            serviceconfig.sendMail('ERROR', 'Configuration FAILURE: No "connections" attribute', 'The "connections" attribute was not specified in the configuration file.')
             return None
         for key in self.connections.keys():
             connection = self.connections[key]
             credentials = connection.get('credentials', None)
             if credentials == None:
                 serviceconfig.logger.debug("Credentials file for reports was not specified.")
-                serviceconfig.sendMail('ERROR', 'Report FAILURE: No credentials file', 'Credentials file was not specified.')
+                serviceconfig.sendMail('ERROR', 'Configuration FAILURE: No credentials file', 'Credentials file was not specified.')
                 return None
             try:
                 if os.path.exists(credentials) and os.path.isfile(credentials):
@@ -109,12 +112,12 @@ class ObserverManager(object):
                     self.clients.update({'%s' % (key): webcli})
                 else:
                     serviceconfig.logger.debug('Bad credentials file "%s".' % credentials)
-                    serviceconfig.sendMail('ERROR', 'Report FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
+                    serviceconfig.sendMail('ERROR', 'Configuration FAILURE: Bad credentials file', 'Bad credentials file "%s".' % credentials)
                     return None
             except:
                 et, ev, tb = sys.exc_info()
-                serviceconfig.logger.debug('Exception generated during reading the Report credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-                serviceconfig.sendMail('ERROR', 'Report FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.logger.debug('Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+                serviceconfig.sendMail('ERROR', 'Configuration FAILURE: %s' % str(et), 'Exception generated during reading the credential %s file: %s\n%s' % (credentials, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                 return None
             
         self.reporter = None
@@ -209,6 +212,19 @@ class ObserverManager(object):
             source = source.replace("\\","/")
         m = re.search(pattern, source)
         return m
+        
+    """
+    Get the template replace.
+    """
+    def template_replace(self, pattern, source, replacement):
+        try:
+            p = re.compile(pattern)
+            return p.sub(replacement, source)
+        except:
+            et, ev, tb = sys.exc_info()
+            serviceconfig.logger.debug('Exception generated during replacing in the string "%s", the occurrences identified by the pattern "%s", by the "%s" value: %s\n%s' % (source, pattern, replacement, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            serviceconfig.sendMail('ERROR', 'Processing FAILURE: %s' % str(et), 'Exception generated during replacing in the string "%s", the occurrences identified by the pattern "%s", by the "%s" value: %s\n%s' % (source, pattern, replacement, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            return None
         
     """
     Get the path from the URL.

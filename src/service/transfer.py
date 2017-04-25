@@ -178,6 +178,16 @@ class Workflow(object):
                 outputDict.update({'encode.value.%s' % col: value})
 
     """
+    Expand the value using the dictionary-based string formatting.
+    """
+    def expandValue(self, value, outputDict):
+        try:
+            ret = value % outputDict
+        except:
+            ret = value
+        return ret
+
+    """
     Apply the dispositions of the rule.
     """
     def applyDisposition(self, fromDir, rule, outputDict, isInnerRule, dir_cleanup_patterns, results):
@@ -198,6 +208,54 @@ class Workflow(object):
                 if groups:
                     for group in groups.keys():
                         outputDict.update({group: groups[group]})
+            elif disposition['handler'] == 'template_replace':
+                """
+                Replace in a string the occurrences identified by a pattern by a replacement value.
+                Required fields:
+                    - source: the string to be replaced
+                    - pattern: a regular expression to identify the occurrences to be replaced in the source string
+                    - replacement: the value to replace the identified occurrences
+                """
+                source = disposition.get('source', None)
+                if source != None:
+                    source = self.expandValue(source, outputDict)
+                else:
+                    serviceconfig.logger.error('The "source" attribute is not specified in the "template_replace" handler.')
+                    serviceconfig.sendMail('ERROR', 'Bad template_replace handler', 'The "source" attribute is not specified in the "template_replace" handler.')
+                    self.reportAction(self.filename, 'failure', 'Bad template_replace handler')
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    complete = False
+                    break
+                pattern = disposition.get('pattern', None)
+                if pattern != None:
+                    pattern = self.expandValue(pattern, outputDict)
+                else:
+                    serviceconfig.logger.error('The "pattern" attribute is not specified in the "template_replace" handler.')
+                    serviceconfig.sendMail('ERROR', 'Bad template_replace handler', 'The "pattern" attribute is not specified in the "template_replace" handler.')
+                    self.reportAction(self.filename, 'failure', 'Bad template_replace handler')
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    complete = False
+                    break
+                replacement = disposition.get('replacement', None)
+                if replacement != None:
+                    replacement = self.expandValue(replacement, outputDict)
+                else:
+                    serviceconfig.logger.error('The "replacement" attribute is not specified in the "template_replace" handler.')
+                    serviceconfig.sendMail('ERROR', 'Bad template_replace handler', 'The "replacement" attribute is not specified in the "template_replace" handler.')
+                    self.reportAction(self.filename, 'failure', 'Bad template_replace handler')
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    complete = False
+                    break
+                replace_result = self.basicDict['template_replace'](pattern, source, replacement)
+                if replace_result == None:
+                    complete = False
+                    self.moveFile(self.filename, 'failure', fromDir, dir_cleanup_patterns)
+                    results.append('failure')
+                    break
+                outputDict.update({'replace.result': replace_result})
             elif disposition['handler'] == 'template_pattern':
                 """
                 Match a string against a pattern.
