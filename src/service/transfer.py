@@ -575,6 +575,16 @@ class Workflow(object):
                     """
                     cols = dict()
                     colmap = disposition.get('colmap', {})
+                    """
+                    Remove from the dictionary the columns with NULL values
+                    """
+                    for col in colmap.keys():
+                        try:
+                            value = outputDict[col]
+                            if value == None:
+                                del outputDict[col]
+                        except:
+                            pass
                     for col in colmap.keys():
                         try:
                             value = colmap[col] % outputDict
