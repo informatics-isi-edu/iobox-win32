@@ -698,20 +698,23 @@ class Observer(object):
                         serviceconfig.sendMail('ERROR', 'File Processing FAILURE: %s' % str(et), 'Exception generated during the processing of the new file "%s":\n%s\n%s' % (full_filename, str(ev), ''.join(traceback.format_exception(et, ev, tb))))
                         self.reportAction(full_filename, 'failure', str(et))
                 files = self.getNewFiles(self.inbox)
-            count = (self.timeout*60) / 10
-            i = 0
-            try:
-                while self.isAlive:
-                    time.sleep(10)
-                    i = i+1
-                    if i >= count:
-                        break
-            except:
-                et, ev, tb = sys.exc_info()
-                serviceconfig.logger.error('got Sleep exception "%s"' % str(ev))
-                serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
-                serviceconfig.sendMail('ERROR', 'Sleep Processing FAILURE: %s' % str(et), 'Exception generated during the sleep process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
-            
+            if self.timeout > 0:
+                count = (self.timeout*60) / 10
+                i = 0
+                try:
+                    while self.isAlive:
+                        time.sleep(10)
+                        i = i+1
+                        if i >= count:
+                            break
+                except:
+                    et, ev, tb = sys.exc_info()
+                    serviceconfig.logger.error('got Sleep exception "%s"' % str(ev))
+                    serviceconfig.logger.error('%s' % str(traceback.format_exception(et, ev, tb)))
+                    serviceconfig.sendMail('ERROR', 'Sleep Processing FAILURE: %s' % str(et), 'Exception generated during the sleep process:\n%s\n%s' % (str(ev), ''.join(traceback.format_exception(et, ev, tb))))
+            else:
+                self.isAlive = False
+                serviceconfig.logger.info('No more files to process. Exiting...')
                 
     """
     Wait for file events
