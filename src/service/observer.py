@@ -72,6 +72,7 @@ class ObserverManager(object):
         self.basicDict.update({'mtime': self.mtime})
         self.basicDict.update({'sha256sum': self.sha256sum})
         self.basicDict.update({'md5sum': self.md5sum})
+        self.basicDict.update({'md5hex': self.md5hex})
         self.basicDict.update({'sha256base64': self.sha256base64})
         self.basicDict.update({'content_checksum': self.content_checksum})
         self.basicDict.update({'patterngroups': self.patterngroups})
@@ -252,6 +253,24 @@ class ObserverManager(object):
     def mtime(self, filename):
         return datetime.utcfromtimestamp(os.path.getmtime(filename))
         
+    """
+    Get the hexa md5 checksum of the file.
+    """
+    def md5hex(self, fpath):
+        h = hashlib.md5()
+        try:
+            f = open(fpath, 'rb')
+            try:
+                b = f.read(4096)
+                while b:
+                    h.update(b)
+                    b = f.read(4096)
+                return h.hexdigest()
+            finally:
+                f.close()
+        except:
+            return None
+
     """
     Get the checksum of the file.
     """

@@ -349,6 +349,14 @@ class Workflow(object):
                 prefix = disposition.get('prefix', '') % outputDict
                 md5sum = self.basicDict['md5sum'](self.filename, chunk_size)
                 outputDict.update({'%smd5sum' % prefix: md5sum})
+            elif disposition['handler'] == 'md5':
+                """
+                Add the hexa digest string of the file computed with the md5 utility.
+                """
+                chunk_size = disposition.get('chunk_size', 10000000)
+                prefix = disposition.get('prefix', '') % outputDict
+                md5hex = self.basicDict['md5hex'](self.filename, chunk_size)
+                outputDict.update({'%smd5' % prefix: md5hex})
             elif disposition['handler'] == 'mtime':
                 """
                 Add the modification time in the specified format.
