@@ -353,9 +353,8 @@ class Workflow(object):
                 """
                 Add the hexa digest string of the file computed with the md5 utility.
                 """
-                chunk_size = disposition.get('chunk_size', 10000000)
                 prefix = disposition.get('prefix', '') % outputDict
-                md5hex = self.basicDict['md5hex'](self.filename, chunk_size)
+                md5hex = self.basicDict['md5hex'](self.filename)
                 outputDict.update({'%smd5' % prefix: md5hex})
             elif disposition['handler'] == 'mtime':
                 """
