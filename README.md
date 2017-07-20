@@ -102,9 +102,12 @@ IObox strategy is based on disposition rules. There is a config stanza for each 
      will optional prefix metadata field names based on the presence
      of a `prefix` key in the rule block.
 1. We provide some basic metadata like `basename, nbytes, 
-   sha256, md5sum, mtime, patterngroups, urlQuote`, etc. 
+   sha256, md5, md5sum, mtime, patterngroups, urlQuote`, etc. 
    at the start of the disposition sequence.
-1. The **mtime** handler  generates the UTC last modification timestamp 
+1. The **sha256** handler generates the `hexa` of the `sha256` digest string of the file.
+1. The **md5** handler generates the `hexa` of the `md5` digest string of the file.
+1. The **md5sum** handler generates the `base64` of the `md5` digest string of the file.
+1. The **mtime** handler generates the UTC last modification timestamp 
    of the file in the format `%Y-%m-%d %H:%M:%S.%f`. The format 
    directives are the ones used by Python.
 1. The **datetime** handler converts a timestamp defined in the `input` 
