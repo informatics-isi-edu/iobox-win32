@@ -429,7 +429,14 @@ class Workflow(object):
                     if input_date_string != None:
                         input_format = input.get('format', '%Y-%m-%d %H:%M:%S.%f')
                         try:
-                            input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
+                            if 'T' in input_format:
+                                """
+                                TimeZone in the date.
+                                Trim the TimeZone, as Python does not support a format directive for the TimeZone
+                                """
+                                input_datetime = datetime.strptime((input_date_string % outputDict)[:-6], input_format)
+                            else:
+                                input_datetime = datetime.strptime(input_date_string % outputDict, input_format)
                             for name in output.keys():
                                 output_format = output[name]
                                 value = input_datetime.strftime(output_format)
