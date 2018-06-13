@@ -170,6 +170,7 @@ def load(config_filename=None):
     report = cfg.get('report', None)
     connections = cfg.get('connections', None)
     content_types_map = cfg.get('content_types_map', None)
+    system_colnames = cfg.get('system_colnames', [])
     if monitored_dirs:
         observerManager = observer.ObserverManager(mail_server=mail_server, \
                                                   mail_sender=mail_sender, \
@@ -178,6 +179,7 @@ def load(config_filename=None):
                                                   scan_interval=scan_interval, \
                                                   report=report, \
                                                   connections=connections, \
+                                                  system_colnames=system_colnames, \
                                                   monitored_dirs=monitored_dirs)
         return observerManager.load()
     else:

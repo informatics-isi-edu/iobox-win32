@@ -63,6 +63,7 @@ class ObserverManager(object):
         self.monitored_dirs = kwargs.get("monitored_dirs")
         self.report = kwargs.get("report")
         self.connections = kwargs.get("connections")
+        self.system_colnames = kwargs.get("system_colnames")
         self.clients = dict()
         self.observers = []
         self.timer = []
@@ -606,6 +607,7 @@ class Observer(object):
         self.basicDict = observers.basicDict
         self.clients = observers.clients
         self.reporter = observers.reporter
+        self.system_colnames = observers.system_colnames
 
     """
     Load the observer configuration.

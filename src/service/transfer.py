@@ -33,6 +33,7 @@ class Workflow(object):
         self.inbox = observer.inbox
         self.basicDict = observer.basicDict
         self.reporter = observer.reporter
+        self.system_colnames = observer.system_colnames
         self.isAlive = True
 
     """
@@ -557,7 +558,7 @@ class Workflow(object):
                             rows = json.load(resp)
                             defaults = []
                             for row in rows:
-                                if row['name'] not in cols.keys():
+                                if row['name'] not in cols.keys() and row['name'] not in self.system_colnames:
                                     cols.update({row['name']: None})
                                     defaults.append(self.basicDict['urlQuote'](row['name'], safe=''))
                             if len(defaults) > 0:
